@@ -1,0 +1,40 @@
+{
+  // HUDパネル左上の表示座標。
+  "panelX": 1480,
+  "panelY": 20,
+
+  // HUDパネルのサイズ。
+  "panelWidth": 420,
+  "panelHeight": 360,
+
+  // HUD全体のフォント。
+  "fontFamily": "Yu Gothic UI",
+
+  // 通常画面のタイトルサイズ。
+  "titleFontSize": 13,
+
+  // 詳細画面上段の分類パス用タイトルサイズ。
+  "detailTitleFontSize": 13,
+
+  // 詳細画面の機能名タイトルサイズ。
+  "featureTitleFontSize": 18,
+
+  // 補助情報、リスト、詳細本文の文字サイズ。
+  "filterFontSize": 12,
+  "listFontSize": 12,
+  "detailFontSize": 12,
+
+  // 左クリック/右クリックの表示ラベル。内部値は 1 / 0 のまま。
+  "bitLabels": {
+    "one": "1",
+    "zero": "0"
+  },
+
+  // 全画面入力面の背景RGBA。aは 0.0-1.0 または 0-255。
+  "backgroundRgba": {
+    "r": 0,
+    "g": 0,
+    "b": 0,
+    "a": 0.1
+  }
+}
