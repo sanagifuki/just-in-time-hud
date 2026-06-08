@@ -3,6 +3,10 @@
   "panelX": 1480,
   "panelY": 20,
 
+  // 直近詳細HUDの左上の表示座標。
+  "recentPanelX": 1480,
+  "recentPanelY": 395,
+
   // HUDパネルのサイズ。
   "panelWidth": 420,
   "panelHeight": 360,

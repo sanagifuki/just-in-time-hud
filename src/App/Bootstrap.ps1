@@ -4,7 +4,19 @@ Add-Type -AssemblyName WindowsBase
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms
 
-Add-Type -TypeDefinition @"
+if (-not $script:AppRoot) {
+    $scriptPath = if ($PSCommandPath) { $PSCommandPath } else { $MyInvocation.MyCommand.Path }
+    $scriptDir = Split-Path -Parent $scriptPath
+    if ((Split-Path -Leaf $scriptDir) -eq 'dist') {
+        $script:AppRoot = Split-Path -Parent $scriptDir
+    }
+    else {
+        $script:AppRoot = $scriptDir
+    }
+}
+
+if (-not ('HudNativeMethods' -as [type])) {
+    Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
 
@@ -15,5 +27,7 @@ public static class HudNativeMethods
 
     [DllImport("user32.dll")]
     public static extern bool SetForegroundWindow(IntPtr hWnd);
+
 }
 "@
+}
