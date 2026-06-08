@@ -1,6 +1,6 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: a1f8dd8
+# Source commit: e3920fd
 
 #region src/App/Bootstrap.ps1
 Add-Type -AssemblyName PresentationCore
