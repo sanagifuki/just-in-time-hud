@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Just-in-Time HUD icon</title>
+  <desc id="desc">A simple floating HUD panel with a green prompt marker.</desc>
+  <rect width="256" height="256" rx="56" fill="#111111"/>
+  <rect x="48" y="62" width="160" height="132" rx="28" fill="#F6F8FA"/>
+  <rect x="48" y="62" width="160" height="132" rx="28" fill="none" stroke="#B8C0CC" stroke-width="8"/>
+  <rect x="74" y="94" width="16" height="68" rx="8" fill="#16A34A"/>
+  <rect x="108" y="101" width="70" height="12" rx="6" fill="#111827"/>
+  <rect x="108" y="124" width="50" height="12" rx="6" fill="#6B7280"/>
+  <rect x="108" y="147" width="78" height="12" rx="6" fill="#D1D5DB"/>
+</svg>

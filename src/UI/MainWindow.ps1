@@ -361,6 +361,9 @@ function Show-HudWindow {
 
     $reader = [System.Xml.XmlNodeReader]::new($xaml)
     $window = [Windows.Markup.XamlReader]::Load($reader)
+    if (Test-Path -LiteralPath $script:DefaultHudIconPath) {
+        $window.Icon = [System.Windows.Media.Imaging.BitmapFrame]::Create([System.Uri]::new($script:DefaultHudIconPath))
+    }
     $root = $window.FindName('Root')
     $titleMarker = $window.FindName('TitleMarkerText')
     $title = $window.FindName('TitleText')

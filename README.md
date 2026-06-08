@@ -1,8 +1,16 @@
+![Just-in-Time HUD header](assets/header/just-in-time-hud-header.png)
+
 # Just-in-Time HUD
 
 Just-in-Time HUD は、ショートカット、コマンド、操作手順、テンプレートを必要な瞬間に素早く参照するための Windows 向け HUD です。
 
 新しい効率化機能を追加するのではなく、OS・アプリ・エディタ・CLI が既に持っている機能へ到達する時間を短くすることを目的にしています。
+
+## スクリーンショット
+
+| ![Root category screen](assets/screenshots/root-category.png) | ![Group category screen](assets/screenshots/group-category.png) | ![Feature list screen](assets/screenshots/feature-list.png) | ![Detail screen](assets/screenshots/detail-view.png) |
+| :---: | :---: | :---: | :---: |
+| 親分類 | 中分類 | 機能リスト | 詳細画面 |
 
 ## 特徴
 
@@ -13,6 +21,7 @@ Just-in-Time HUD は、ショートカット、コマンド、操作手順、テ
 - HUD退避後に直前の作業ウィンドウへフォーカス復帰
 - ショートカット、コピー可能コマンド、長文手順、説明のみ項目に対応
 - 直近で開いた詳細を次回表示時に別パネルで再表示
+- タスクバー用アイコンを同梱
 - 開発時は `src/` の分割ファイル、配布時は単一 `dist/JustInTimeHud.ps1`
 
 ## 起動
@@ -214,6 +223,17 @@ verify.ps1
 settings.jsonc
 data/
   hud-items.sample.json
+assets/
+  icon.svg
+  icon.png
+  icon.ico
+  header/
+    just-in-time-hud-header.png
+  screenshots/
+    root-category.png
+    group-category.png
+    feature-list.png
+    detail-view.png
 src/
   App/
   Config/

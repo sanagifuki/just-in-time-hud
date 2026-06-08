@@ -1,6 +1,6 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: e3920fd
+# Source commit: fc3ed52
 
 #region src/App/Bootstrap.ps1
 Add-Type -AssemblyName PresentationCore
@@ -43,6 +43,7 @@ public static class HudNativeMethods
 $script:AppName = 'Just-in-Time HUD'
 $script:DefaultHudDataPath = Join-Path $script:AppRoot 'data\hud-items.sample.json'
 $script:DefaultHudSettingsPath = Join-Path $script:AppRoot 'settings.jsonc'
+$script:DefaultHudIconPath = Join-Path $script:AppRoot 'assets\icon.ico'
 
 #endregion src/Config/AppConfig.ps1
 
@@ -679,6 +680,9 @@ function Show-HudWindow {
 
     $reader = [System.Xml.XmlNodeReader]::new($xaml)
     $window = [Windows.Markup.XamlReader]::Load($reader)
+    if (Test-Path -LiteralPath $script:DefaultHudIconPath) {
+        $window.Icon = [System.Windows.Media.Imaging.BitmapFrame]::Create([System.Uri]::new($script:DefaultHudIconPath))
+    }
     $root = $window.FindName('Root')
     $titleMarker = $window.FindName('TitleMarkerText')
     $title = $window.FindName('TitleText')
