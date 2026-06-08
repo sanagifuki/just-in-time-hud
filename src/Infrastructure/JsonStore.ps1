@@ -5,6 +5,9 @@ function Read-HudJson {
     )
 
     if (-not (Test-Path -LiteralPath $Path)) {
+        if ($script:EmbeddedHudDataJson) {
+            return $script:EmbeddedHudDataJson | ConvertFrom-Json
+        }
         throw "HUD data file not found: $Path"
     }
 

@@ -19,6 +19,16 @@ catch {
 }
 [void]$builder.AppendLine()
 
+$dataPath = Join-Path $repoRoot 'data\hud-items.sample.json'
+if (-not (Test-Path -LiteralPath $dataPath)) {
+    throw 'HUD data file not found: data\hud-items.sample.json'
+}
+[void]$builder.AppendLine('$script:EmbeddedHudDataJson = @''')
+[void]$builder.Append((Get-Content -LiteralPath $dataPath -Raw -Encoding UTF8))
+[void]$builder.AppendLine()
+[void]$builder.AppendLine('''@')
+[void]$builder.AppendLine()
+
 foreach ($relativePath in $manifest.SourceFiles) {
     $path = Join-Path $repoRoot $relativePath
     if (-not (Test-Path -LiteralPath $path)) {

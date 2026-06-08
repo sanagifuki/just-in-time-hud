@@ -44,6 +44,8 @@ Just-in-Time HUD は、ショートカット、コマンド、操作手順、テ
 .\dist\JustInTimeHud.ps1
 ```
 
+`dist\JustInTimeHud.ps1` はサンプルデータを内蔵しているため、単体で起動できます。同じフォルダ構成に `data\hud-items.sample.json` がある場合は、そのファイルを読み込みます。
+
 検証:
 
 ```powershell
