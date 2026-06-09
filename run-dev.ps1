@@ -6,6 +6,7 @@ $ErrorActionPreference = 'Stop'
 $manifest = Import-PowerShellDataFile -LiteralPath $ManifestPath
 $repoRoot = Split-Path -Parent $ManifestPath
 $script:AppRoot = $repoRoot
+$script:HudDevelopmentMode = $true
 
 foreach ($relativePath in $manifest.SourceFiles) {
     $path = Join-Path $repoRoot $relativePath
@@ -14,4 +15,3 @@ foreach ($relativePath in $manifest.SourceFiles) {
     }
     . $path
 }
-

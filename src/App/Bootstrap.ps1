@@ -6,13 +6,7 @@ Add-Type -AssemblyName System.Windows.Forms
 
 if (-not $script:AppRoot) {
     $scriptPath = if ($PSCommandPath) { $PSCommandPath } else { $MyInvocation.MyCommand.Path }
-    $scriptDir = Split-Path -Parent $scriptPath
-    if ((Split-Path -Leaf $scriptDir) -eq 'dist') {
-        $script:AppRoot = Split-Path -Parent $scriptDir
-    }
-    else {
-        $script:AppRoot = $scriptDir
-    }
+    $script:AppRoot = Split-Path -Parent $scriptPath
 }
 
 if (-not ('HudNativeMethods' -as [type])) {

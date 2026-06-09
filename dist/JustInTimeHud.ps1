@@ -1,128 +1,12 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: 0972b1b
+# Source commit: 7e8c072
 
 $script:EmbeddedHudDataJson = @'
 [
   {
-    "name": "Windows",
-    "groups": [
-      {
-        "name": "Window",
-        "features": [
-          {
-            "title": "Switch window（ウィンドウ切り替え）",
-            "bitTag": "1",
-            "shortcut": "Alt + Tab",
-            "description": "開いているウィンドウを順番に切り替える。"
-          },
-          {
-            "title": "Snap left（左半分に配置）",
-            "bitTag": "0",
-            "shortcut": "Win + Left",
-            "description": "現在のウィンドウを画面左半分へ配置する。"
-          },
-          {
-            "title": "Show desktop（デスクトップ表示）",
-            "bitTag": "11",
-            "shortcut": "Win + D",
-            "description": "すべてのウィンドウを一時的に隠してデスクトップを表示する。"
-          }
-        ]
-      },
-      {
-        "name": "System",
-        "features": [
-          {
-            "title": "Run dialog（ファイル名を指定して実行）",
-            "bitTag": "1",
-            "shortcut": "Win + R",
-            "description": "コマンド、フォルダパス、URL、アプリ名を指定して開く。"
-          },
-          {
-            "title": "Settings（設定を開く）",
-            "bitTag": "0",
-            "shortcut": "Win + I",
-            "description": "Windows設定を開く。"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "name": "Editor",
-    "groups": [
-      {
-        "name": "Selection",
-        "features": [
-          {
-            "title": "Select next match（次の一致を選択）",
-            "bitTag": "1",
-            "shortcut": "Ctrl + D",
-            "description": "現在選択中の語句と一致する次の候補を追加選択する。"
-          },
-          {
-            "title": "Select all matches（全一致を選択）",
-            "bitTag": "0",
-            "shortcut": "Ctrl + Shift + L",
-            "description": "現在選択中の語句と一致するすべての箇所を選択する。"
-          },
-          {
-            "title": "Expand selection（選択範囲を広げる）",
-            "bitTag": "10",
-            "shortcut": "Shift + Alt + Right",
-            "description": "構文単位で選択範囲を広げる。"
-          }
-        ]
-      },
-      {
-        "name": "Navigation",
-        "features": [
-          {
-            "title": "Command palette（コマンドパレット）",
-            "bitTag": "1",
-            "shortcut": "Ctrl + Shift + P",
-            "description": "エディタの機能を名前で検索して実行する。"
-          },
-          {
-            "title": "Go to file（ファイルへ移動）",
-            "bitTag": "0",
-            "shortcut": "Ctrl + P",
-            "description": "ファイル名を入力して目的のファイルへ移動する。"
-          }
-        ]
-      }
-    ]
-  },
-  {
     "name": "Terminal",
     "groups": [
-      {
-        "name": "PowerShell",
-        "features": [
-          {
-            "title": "List files（ファイル一覧）",
-            "bitTag": "1",
-            "shortcut": "Get-ChildItem",
-            "copyable": true,
-            "description": "現在のフォルダ内のファイルとフォルダを表示する。"
-          },
-          {
-            "title": "Find text（文字列検索）",
-            "bitTag": "0",
-            "shortcut": "Select-String -Path *.ps1 -Pattern \"TODO\"",
-            "copyable": true,
-            "description": "指定したファイル群から文字列を検索する。"
-          },
-          {
-            "title": "Open current folder（現在フォルダを開く）",
-            "bitTag": "11",
-            "shortcut": "explorer .",
-            "copyable": true,
-            "description": "現在のターミナル位置をエクスプローラーで開く。"
-          }
-        ]
-      },
       {
         "name": "Git",
         "features": [
@@ -134,46 +18,9 @@ $script:EmbeddedHudDataJson = @'
             "description": "作業ツリーの変更状況を短い形式で確認する。"
           },
           {
-            "title": "Diff（未ステージ差分を確認）",
+            "title": "Before commit（コミット前確認）",
             "bitTag": "0",
-            "shortcut": "git diff",
-            "copyable": true,
-            "description": "まだステージしていない変更差分を確認する。"
-          },
-          {
-            "title": "Commit message（メッセージ付きコミット）",
-            "bitTag": "10",
-            "shortcut": "git commit -m \"Describe change\"",
-            "copyable": true,
-            "description": "ステージ済みの変更を指定メッセージでコミットする。"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "name": "Browser",
-    "groups": [
-      {
-        "name": "Tabs",
-        "features": [
-          {
-            "title": "New tab（新しいタブ）",
-            "bitTag": "1",
-            "shortcut": "Ctrl + T",
-            "description": "新しいブラウザタブを開く。"
-          },
-          {
-            "title": "Reopen closed tab（閉じたタブを復元）",
-            "bitTag": "0",
-            "shortcut": "Ctrl + Shift + T",
-            "description": "直前に閉じたタブを復元する。"
-          },
-          {
-            "title": "Address bar（アドレスバーへ移動）",
-            "bitTag": "11",
-            "shortcut": "Ctrl + L",
-            "description": "アドレスバーへフォーカスを移動する。検索語句やURLをすぐ入力できる。"
+            "description": "コミット前に確認する項目。\n\n1. git status --short で含めるファイルを確認する。\n2. git diff で差分を見る。\n3. 生成物や一時ファイルが混ざっていないか確認する。"
           }
         ]
       }
@@ -183,21 +30,6 @@ $script:EmbeddedHudDataJson = @'
     "name": "Workflow",
     "groups": [
       {
-        "name": "Checklist",
-        "features": [
-          {
-            "title": "Before commit（コミット前確認）",
-            "bitTag": "1",
-            "description": "コミット前に確認する項目。\n\n1. git status --short で含めるファイルを確認する。\n2. git diff と git diff --cached で差分を見る。\n3. 生成物や一時ファイルが混ざっていないか確認する。\n4. 必要な構文チェックやテストを実行する。\n5. 変更理由がコミットメッセージで説明できる粒度か確認する。\n6. 最後にもう一度 git status --short を見る。"
-          },
-          {
-            "title": "Bug report memo（バグ報告メモ）",
-            "bitTag": "0",
-            "description": "バグを記録するときは、発生条件、期待した動作、実際の動作、再現手順、関連ログを分けて書く。あとから直す自分や他人が、同じ状態を再現できることを優先する。"
-          }
-        ]
-      },
-      {
         "name": "Template",
         "features": [
           {
@@ -206,19 +38,60 @@ $script:EmbeddedHudDataJson = @'
             "shortcut": "目的:\n決定事項:\n未決事項:\n次のアクション:",
             "copyable": true,
             "description": "短い打ち合わせメモのテンプレート。必要な項目だけ残して使う。"
-          },
-          {
-            "title": "Daily review（日次振り返り）",
-            "bitTag": "0",
-            "shortcut": "今日進んだこと:\n詰まったこと:\n明日の最初の一手:",
-            "copyable": true,
-            "description": "日次の作業ログや振り返りに使う短いテンプレート。"
           }
         ]
       }
     ]
   }
 ]
+
+'@
+
+$script:EmbeddedHudSettingsJsonc = @'
+{
+  // HUDパネル左上の表示座標。
+  "panelX": 1480,
+  "panelY": 20,
+
+  // 直近詳細HUDの左上の表示座標。
+  "recentPanelX": 1480,
+  "recentPanelY": 395,
+
+  // HUDパネルのサイズ。
+  "panelWidth": 420,
+  "panelHeight": 360,
+
+  // HUD全体のフォント。
+  "fontFamily": "Yu Gothic UI",
+
+  // 通常画面のタイトルサイズ。
+  "titleFontSize": 13,
+
+  // 詳細画面上段の分類パス用タイトルサイズ。
+  "detailTitleFontSize": 13,
+
+  // 詳細画面の機能名タイトルサイズ。
+  "featureTitleFontSize": 18,
+
+  // 補助情報、リスト、詳細本文の文字サイズ。
+  "filterFontSize": 12,
+  "listFontSize": 12,
+  "detailFontSize": 12,
+
+  // 左クリック/右クリックの表示ラベル。内部値は 1 / 0 のまま。
+  "bitLabels": {
+    "one": "1",
+    "zero": "0"
+  },
+
+  // 全画面入力面の背景RGBA。aは 0.0-1.0 または 0-255。
+  "backgroundRgba": {
+    "r": 0,
+    "g": 0,
+    "b": 0,
+    "a": 0.1
+  }
+}
 
 '@
 
@@ -231,13 +104,7 @@ Add-Type -AssemblyName System.Windows.Forms
 
 if (-not $script:AppRoot) {
     $scriptPath = if ($PSCommandPath) { $PSCommandPath } else { $MyInvocation.MyCommand.Path }
-    $scriptDir = Split-Path -Parent $scriptPath
-    if ((Split-Path -Leaf $scriptDir) -eq 'dist') {
-        $script:AppRoot = Split-Path -Parent $scriptDir
-    }
-    else {
-        $script:AppRoot = $scriptDir
-    }
+    $script:AppRoot = Split-Path -Parent $scriptPath
 }
 
 if (-not ('HudNativeMethods' -as [type])) {
@@ -261,7 +128,13 @@ public static class HudNativeMethods
 
 #region src/Config/AppConfig.ps1
 $script:AppName = 'Just-in-Time HUD'
-$script:DefaultHudDataPath = Join-Path $script:AppRoot 'data\hud-items.sample.json'
+$script:DefaultHudSampleDataPath = Join-Path $script:AppRoot 'data\hud-items.sample.json'
+$script:DefaultHudDataPath = if ($script:HudDevelopmentMode) {
+    $script:DefaultHudSampleDataPath
+}
+else {
+    Join-Path $script:AppRoot 'hud-items.json'
+}
 $script:DefaultHudSettingsPath = Join-Path $script:AppRoot 'settings.jsonc'
 $script:DefaultHudIconPath = Join-Path $script:AppRoot 'assets\icon.ico'
 
@@ -276,12 +149,38 @@ function Read-HudJson {
 
     if (-not (Test-Path -LiteralPath $Path)) {
         if ($script:EmbeddedHudDataJson) {
-            return $script:EmbeddedHudDataJson | ConvertFrom-Json
+            Write-HudTextFileIfMissing -Path $Path -Text $script:EmbeddedHudDataJson
         }
-        throw "HUD data file not found: $Path"
+        elseif ($script:DefaultHudSampleDataPath -and (Test-Path -LiteralPath $script:DefaultHudSampleDataPath)) {
+            Write-HudTextFileIfMissing -Path $Path -Text (Get-Content -LiteralPath $script:DefaultHudSampleDataPath -Raw -Encoding UTF8)
+        }
+        else {
+            throw "HUD data file not found: $Path"
+        }
     }
 
     Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+}
+
+function Write-HudTextFileIfMissing {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Text
+    )
+
+    if (Test-Path -LiteralPath $Path) {
+        return
+    }
+
+    $directory = Split-Path -Parent $Path
+    if ($directory -and -not (Test-Path -LiteralPath $directory)) {
+        New-Item -ItemType Directory -Force -Path $directory | Out-Null
+    }
+
+    [System.IO.File]::WriteAllText([System.IO.Path]::GetFullPath($Path), $Text, [System.Text.UTF8Encoding]::new($true))
 }
 
 function Remove-JsoncComments {
@@ -377,7 +276,12 @@ function Read-HudSettings {
     }
 
     if (-not (Test-Path -LiteralPath $Path)) {
-        return $defaults
+        if ($script:EmbeddedHudSettingsJsonc) {
+            Write-HudTextFileIfMissing -Path $Path -Text $script:EmbeddedHudSettingsJsonc
+        }
+        else {
+            return $defaults
+        }
     }
 
     $settings = Remove-JsoncComments -Text (Get-Content -LiteralPath $Path -Raw -Encoding UTF8) | ConvertFrom-Json
@@ -732,13 +636,15 @@ function Show-HudWindow {
                                             Grid.Column="1"
                                             Content="Copy"
                                             Width="40"
+                                            Height="20"
                                             Margin="0,0,0,0"
                                             Padding="6,0"
                                             BorderThickness="0"
                                             Background="Transparent"
                                             Foreground="#6B7280"
                                             FontFamily="$fontFamily"
-                                            FontSize="$filterFontSize"/>
+                                            FontSize="$filterFontSize"
+                                            VerticalAlignment="Top"/>
                                 </Grid>
                             </Border>
                             <TextBlock Grid.Row="2"
@@ -860,12 +766,14 @@ function Show-HudWindow {
                                     Grid.Column="1"
                                     Content="Copy"
                                     Width="40"
+                                    Height="20"
                                     Padding="6,0"
                                     BorderThickness="0"
                                     Background="Transparent"
                                     Foreground="#6B7280"
                                     FontFamily="$fontFamily"
-                                    FontSize="$filterFontSize"/>
+                                    FontSize="$filterFontSize"
+                                    VerticalAlignment="Top"/>
                         </Grid>
                     </Border>
                 </Grid>

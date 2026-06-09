@@ -6,12 +6,38 @@ function Read-HudJson {
 
     if (-not (Test-Path -LiteralPath $Path)) {
         if ($script:EmbeddedHudDataJson) {
-            return $script:EmbeddedHudDataJson | ConvertFrom-Json
+            Write-HudTextFileIfMissing -Path $Path -Text $script:EmbeddedHudDataJson
         }
-        throw "HUD data file not found: $Path"
+        elseif ($script:DefaultHudSampleDataPath -and (Test-Path -LiteralPath $script:DefaultHudSampleDataPath)) {
+            Write-HudTextFileIfMissing -Path $Path -Text (Get-Content -LiteralPath $script:DefaultHudSampleDataPath -Raw -Encoding UTF8)
+        }
+        else {
+            throw "HUD data file not found: $Path"
+        }
     }
 
     Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+}
+
+function Write-HudTextFileIfMissing {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Text
+    )
+
+    if (Test-Path -LiteralPath $Path) {
+        return
+    }
+
+    $directory = Split-Path -Parent $Path
+    if ($directory -and -not (Test-Path -LiteralPath $directory)) {
+        New-Item -ItemType Directory -Force -Path $directory | Out-Null
+    }
+
+    [System.IO.File]::WriteAllText([System.IO.Path]::GetFullPath($Path), $Text, [System.Text.UTF8Encoding]::new($true))
 }
 
 function Remove-JsoncComments {
@@ -107,7 +133,12 @@ function Read-HudSettings {
     }
 
     if (-not (Test-Path -LiteralPath $Path)) {
-        return $defaults
+        if ($script:EmbeddedHudSettingsJsonc) {
+            Write-HudTextFileIfMissing -Path $Path -Text $script:EmbeddedHudSettingsJsonc
+        }
+        else {
+            return $defaults
+        }
     }
 
     $settings = Remove-JsoncComments -Text (Get-Content -LiteralPath $Path -Raw -Encoding UTF8) | ConvertFrom-Json

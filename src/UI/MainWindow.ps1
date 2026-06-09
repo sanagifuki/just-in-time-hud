@@ -190,13 +190,15 @@ function Show-HudWindow {
                                             Grid.Column="1"
                                             Content="Copy"
                                             Width="40"
+                                            Height="20"
                                             Margin="0,0,0,0"
                                             Padding="6,0"
                                             BorderThickness="0"
                                             Background="Transparent"
                                             Foreground="#6B7280"
                                             FontFamily="$fontFamily"
-                                            FontSize="$filterFontSize"/>
+                                            FontSize="$filterFontSize"
+                                            VerticalAlignment="Top"/>
                                 </Grid>
                             </Border>
                             <TextBlock Grid.Row="2"
@@ -318,12 +320,14 @@ function Show-HudWindow {
                                     Grid.Column="1"
                                     Content="Copy"
                                     Width="40"
+                                    Height="20"
                                     Padding="6,0"
                                     BorderThickness="0"
                                     Background="Transparent"
                                     Foreground="#6B7280"
                                     FontFamily="$fontFamily"
-                                    FontSize="$filterFontSize"/>
+                                    FontSize="$filterFontSize"
+                                    VerticalAlignment="Top"/>
                         </Grid>
                     </Border>
                 </Grid>
