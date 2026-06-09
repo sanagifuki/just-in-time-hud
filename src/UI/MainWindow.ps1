@@ -86,6 +86,16 @@ function Show-HudWindow {
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Top">
+                    <Button Name="EditItemsButton"
+                            Content="Edit"
+                            Width="34"
+                            Height="20"
+                            Padding="0"
+                            BorderThickness="0"
+                            Background="Transparent"
+                            Foreground="#6B7280"
+                            FontFamily="$fontFamily"
+                            FontSize="$filterFontSize"/>
                     <Button Name="MinimizeButton"
                             Content="ー"
                             Width="24"
@@ -359,6 +369,115 @@ function Show-HudWindow {
                 </Grid>
             </Grid>
         </Border>
+        <Border Name="EditorPanel"
+                Width="920"
+                Height="620"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="#F6F8FA"
+                BorderBrush="#B8C0CC"
+                BorderThickness="1"
+                Padding="12"
+                Visibility="Collapsed">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="190"/>
+                        <ColumnDefinition Width="190"/>
+                        <ColumnDefinition Width="260"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0" Margin="0,0,10,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="親分類" FontFamily="$fontFamily" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <ListBox Name="EditorCategoryList" Grid.Row="1" FontFamily="$fontFamily"/>
+                        <TextBox Name="EditorCategoryNameBox" Grid.Row="2" FontFamily="$fontFamily" Margin="0,8,0,0"/>
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Name="EditorAddCategoryButton" Content="Add" Width="54" Margin="0,0,6,0"/>
+                            <Button Name="EditorDeleteCategoryButton" Content="Delete" Width="64"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid Grid.Column="1" Margin="0,0,10,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="中分類" FontFamily="$fontFamily" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <ListBox Name="EditorGroupList" Grid.Row="1" FontFamily="$fontFamily"/>
+                        <TextBox Name="EditorGroupNameBox" Grid.Row="2" FontFamily="$fontFamily" Margin="0,8,0,0"/>
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Name="EditorAddGroupButton" Content="Add" Width="54" Margin="0,0,6,0"/>
+                            <Button Name="EditorDeleteGroupButton" Content="Delete" Width="64"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid Grid.Column="2" Margin="0,0,10,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="機能" FontFamily="$fontFamily" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <ListBox Name="EditorFeatureList" Grid.Row="1" FontFamily="$fontFamily"/>
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Name="EditorAddFeatureButton" Content="Add" Width="54" Margin="0,0,6,0"/>
+                            <Button Name="EditorDeleteFeatureButton" Content="Delete" Width="64"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid Grid.Column="3">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="編集" FontFamily="$fontFamily" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <TextBlock Grid.Row="1" Text="Title" FontFamily="$fontFamily" Foreground="#6B7280"/>
+                        <TextBox Name="EditorTitleBox" Grid.Row="2" FontFamily="$fontFamily" Margin="0,2,0,8"/>
+                        <Grid Grid.Row="3" Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Bit" FontFamily="$fontFamily" Foreground="#6B7280"/>
+                            <TextBox Name="EditorBitTagBox" Grid.Row="1" Grid.Column="0" FontFamily="$fontFamily" Margin="0,2,8,0"/>
+                            <CheckBox Name="EditorCopyableBox" Grid.Row="1" Grid.Column="1" Content="copyable" FontFamily="$fontFamily" VerticalAlignment="Center" Margin="0,2,0,0"/>
+                        </Grid>
+                        <TextBlock Grid.Row="4" Text="Shortcut / Command / Template" FontFamily="$fontFamily" Foreground="#6B7280"/>
+                        <TextBox Name="EditorShortcutBox" Grid.Row="5" FontFamily="$fontFamily" Margin="0,2,0,8" AcceptsReturn="True" Height="88" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                        <TextBlock Grid.Row="6" Text="Description" FontFamily="$fontFamily" Foreground="#6B7280"/>
+                        <TextBox Name="EditorDescriptionBox" Grid.Row="7" FontFamily="$fontFamily" Margin="0,2,0,0" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                        <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                            <Button Name="EditorSaveButton" Content="Save JSON" Width="92" Margin="0,0,8,0"/>
+                            <Button Name="EditorCloseButton" Content="Close" Width="72"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+                <Grid Grid.Row="1" Margin="0,12,0,0">
+                    <TextBlock Name="EditorStatusText" FontFamily="$fontFamily" VerticalAlignment="Center" Foreground="#374151"/>
+                </Grid>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
 "@
@@ -369,9 +488,11 @@ function Show-HudWindow {
         $window.Icon = [System.Windows.Media.Imaging.BitmapFrame]::Create([System.Uri]::new($script:DefaultHudIconPath))
     }
     $root = $window.FindName('Root')
+    $panel = $window.FindName('Panel')
     $titleMarker = $window.FindName('TitleMarkerText')
     $title = $window.FindName('TitleText')
     $minimizeButton = $window.FindName('MinimizeButton')
+    $editItemsButton = $window.FindName('EditItemsButton')
     $closeButton = $window.FindName('CloseButton')
     $filter = $window.FindName('FilterText')
     $filterRow = $window.FindName('FilterRow')
@@ -392,6 +513,224 @@ function Show-HudWindow {
     $recentCopyShortcutButton = $window.FindName('RecentCopyShortcutButton')
     $recentDescriptionText = $window.FindName('RecentDescriptionText')
     $recentCloseButton = $window.FindName('RecentCloseButton')
+    $editorPanel = $window.FindName('EditorPanel')
+    $editorCategoryList = $window.FindName('EditorCategoryList')
+    $editorGroupList = $window.FindName('EditorGroupList')
+    $editorFeatureList = $window.FindName('EditorFeatureList')
+    $editorCategoryNameBox = $window.FindName('EditorCategoryNameBox')
+    $editorGroupNameBox = $window.FindName('EditorGroupNameBox')
+    $editorAddCategoryButton = $window.FindName('EditorAddCategoryButton')
+    $editorDeleteCategoryButton = $window.FindName('EditorDeleteCategoryButton')
+    $editorAddGroupButton = $window.FindName('EditorAddGroupButton')
+    $editorDeleteGroupButton = $window.FindName('EditorDeleteGroupButton')
+    $editorAddFeatureButton = $window.FindName('EditorAddFeatureButton')
+    $editorDeleteFeatureButton = $window.FindName('EditorDeleteFeatureButton')
+    $editorTitleBox = $window.FindName('EditorTitleBox')
+    $editorBitTagBox = $window.FindName('EditorBitTagBox')
+    $editorShortcutBox = $window.FindName('EditorShortcutBox')
+    $editorCopyableBox = $window.FindName('EditorCopyableBox')
+    $editorDescriptionBox = $window.FindName('EditorDescriptionBox')
+    $editorSaveButton = $window.FindName('EditorSaveButton')
+    $editorCloseButton = $window.FindName('EditorCloseButton')
+    $editorStatusText = $window.FindName('EditorStatusText')
+
+    function Set-HudProperty {
+        param(
+            [Parameter(Mandatory = $true)]
+            [object]$Target,
+            [Parameter(Mandatory = $true)]
+            [string]$Name,
+            [object]$Value
+        )
+
+        if ($Target.PSObject.Properties.Name -contains $Name) {
+            $Target.$Name = $Value
+        }
+        else {
+            $Target | Add-Member -NotePropertyName $Name -NotePropertyValue $Value -Force
+        }
+    }
+
+    function Set-EditorStatus {
+        param([string]$Text)
+        $editorStatusText.Text = $Text
+    }
+
+    function Get-EditorSelectedCategory {
+        if ($editorCategoryList.SelectedIndex -lt 0 -or $editorCategoryList.SelectedIndex -ge @($State.Items).Count) {
+            return $null
+        }
+        return @($State.Items)[$editorCategoryList.SelectedIndex]
+    }
+
+    function Get-EditorSelectedGroup {
+        $category = Get-EditorSelectedCategory
+        if ($null -eq $category -or $editorGroupList.SelectedIndex -lt 0 -or $editorGroupList.SelectedIndex -ge @($category.groups).Count) {
+            return $null
+        }
+        return @($category.groups)[$editorGroupList.SelectedIndex]
+    }
+
+    function Get-EditorSelectedFeature {
+        $group = Get-EditorSelectedGroup
+        if ($null -eq $group -or $editorFeatureList.SelectedIndex -lt 0 -or $editorFeatureList.SelectedIndex -ge @($group.features).Count) {
+            return $null
+        }
+        return @($group.features)[$editorFeatureList.SelectedIndex]
+    }
+
+    function Refresh-EditorFeatureFields {
+        $feature = Get-EditorSelectedFeature
+        if ($null -eq $feature) {
+            $editorTitleBox.Text = ''
+            $editorBitTagBox.Text = ''
+            $editorShortcutBox.Text = ''
+            $editorCopyableBox.IsChecked = $false
+            $editorDescriptionBox.Text = ''
+            return
+        }
+
+        $editorTitleBox.Text = [string]$feature.title
+        $editorBitTagBox.Text = [string]$feature.bitTag
+        $editorShortcutBox.Text = if ($feature.PSObject.Properties.Name -contains 'shortcut') { [string]$feature.shortcut } else { '' }
+        $editorCopyableBox.IsChecked = ($feature.PSObject.Properties.Name -contains 'copyable' -and [bool]$feature.copyable)
+        $editorDescriptionBox.Text = [string]$feature.description
+    }
+
+    function Refresh-EditorFeatureList {
+        $selected = [Math]::Max(0, $editorFeatureList.SelectedIndex)
+        $editorFeatureList.Items.Clear()
+        $group = Get-EditorSelectedGroup
+        if ($null -ne $group) {
+            foreach ($feature in @($group.features)) {
+                [void]$editorFeatureList.Items.Add($feature.title)
+            }
+        }
+        if ($editorFeatureList.Items.Count -gt 0) {
+            $editorFeatureList.SelectedIndex = [Math]::Min($selected, $editorFeatureList.Items.Count - 1)
+        }
+        Refresh-EditorFeatureFields
+    }
+
+    function Refresh-EditorGroupList {
+        $selected = [Math]::Max(0, $editorGroupList.SelectedIndex)
+        $editorGroupList.Items.Clear()
+        $category = Get-EditorSelectedCategory
+        $editorCategoryNameBox.Text = if ($null -ne $category) { [string]$category.name } else { '' }
+        if ($null -ne $category) {
+            foreach ($group in @($category.groups)) {
+                [void]$editorGroupList.Items.Add($group.name)
+            }
+        }
+        if ($editorGroupList.Items.Count -gt 0) {
+            $editorGroupList.SelectedIndex = [Math]::Min($selected, $editorGroupList.Items.Count - 1)
+        }
+        $group = Get-EditorSelectedGroup
+        $editorGroupNameBox.Text = if ($null -ne $group) { [string]$group.name } else { '' }
+        Refresh-EditorFeatureList
+    }
+
+    function Refresh-EditorCategoryList {
+        $selected = [Math]::Max(0, $editorCategoryList.SelectedIndex)
+        $editorCategoryList.Items.Clear()
+        foreach ($category in @($State.Items)) {
+            [void]$editorCategoryList.Items.Add($category.name)
+        }
+        if ($editorCategoryList.Items.Count -gt 0) {
+            $editorCategoryList.SelectedIndex = [Math]::Min($selected, $editorCategoryList.Items.Count - 1)
+        }
+        Refresh-EditorGroupList
+    }
+
+    function Apply-EditorCategoryName {
+        $category = Get-EditorSelectedCategory
+        if ($null -eq $category) { return }
+        Set-HudProperty -Target $category -Name 'name' -Value $editorCategoryNameBox.Text
+        $editorCategoryList.Items[$editorCategoryList.SelectedIndex] = $editorCategoryNameBox.Text
+    }
+
+    function Apply-EditorGroupName {
+        $group = Get-EditorSelectedGroup
+        if ($null -eq $group) { return }
+        Set-HudProperty -Target $group -Name 'name' -Value $editorGroupNameBox.Text
+        $editorGroupList.Items[$editorGroupList.SelectedIndex] = $editorGroupNameBox.Text
+    }
+
+    function Apply-EditorFeatureFields {
+        $feature = Get-EditorSelectedFeature
+        if ($null -eq $feature) { return }
+        Set-HudProperty -Target $feature -Name 'title' -Value $editorTitleBox.Text
+        Set-HudProperty -Target $feature -Name 'bitTag' -Value $editorBitTagBox.Text
+        Set-HudProperty -Target $feature -Name 'description' -Value $editorDescriptionBox.Text
+
+        if ([string]::IsNullOrWhiteSpace($editorShortcutBox.Text)) {
+            if ($feature.PSObject.Properties.Name -contains 'shortcut') { $feature.PSObject.Properties.Remove('shortcut') }
+            if ($feature.PSObject.Properties.Name -contains 'copyable') { $feature.PSObject.Properties.Remove('copyable') }
+        }
+        else {
+            Set-HudProperty -Target $feature -Name 'shortcut' -Value $editorShortcutBox.Text
+            if ([bool]$editorCopyableBox.IsChecked) {
+                Set-HudProperty -Target $feature -Name 'copyable' -Value $true
+            }
+            elseif ($feature.PSObject.Properties.Name -contains 'copyable') {
+                $feature.PSObject.Properties.Remove('copyable')
+            }
+        }
+        if ($editorFeatureList.SelectedIndex -ge 0) {
+            $editorFeatureList.Items[$editorFeatureList.SelectedIndex] = $editorTitleBox.Text
+        }
+    }
+
+    function Save-EditorCurrentFields {
+        $category = Get-EditorSelectedCategory
+        if ($null -ne $category) {
+            Set-HudProperty -Target $category -Name 'name' -Value $editorCategoryNameBox.Text
+        }
+
+        $group = Get-EditorSelectedGroup
+        if ($null -ne $group) {
+            Set-HudProperty -Target $group -Name 'name' -Value $editorGroupNameBox.Text
+        }
+
+        $feature = Get-EditorSelectedFeature
+        if ($null -eq $feature) {
+            return
+        }
+
+        Set-HudProperty -Target $feature -Name 'title' -Value $editorTitleBox.Text
+        Set-HudProperty -Target $feature -Name 'bitTag' -Value $editorBitTagBox.Text
+        Set-HudProperty -Target $feature -Name 'description' -Value $editorDescriptionBox.Text
+
+        if ([string]::IsNullOrWhiteSpace($editorShortcutBox.Text)) {
+            if ($feature.PSObject.Properties.Name -contains 'shortcut') { $feature.PSObject.Properties.Remove('shortcut') }
+            if ($feature.PSObject.Properties.Name -contains 'copyable') { $feature.PSObject.Properties.Remove('copyable') }
+        }
+        else {
+            Set-HudProperty -Target $feature -Name 'shortcut' -Value $editorShortcutBox.Text
+            if ([bool]$editorCopyableBox.IsChecked) {
+                Set-HudProperty -Target $feature -Name 'copyable' -Value $true
+            }
+            elseif ($feature.PSObject.Properties.Name -contains 'copyable') {
+                $feature.PSObject.Properties.Remove('copyable')
+            }
+        }
+    }
+
+    function Show-EditorPanel {
+        $panel.Visibility = [System.Windows.Visibility]::Collapsed
+        $recentPanel.Visibility = [System.Windows.Visibility]::Collapsed
+        $editorPanel.Visibility = [System.Windows.Visibility]::Visible
+        Refresh-EditorCategoryList
+        Set-EditorStatus "Editing: $script:DefaultHudDataPath"
+    }
+
+    function Close-EditorPanel {
+        $editorPanel.Visibility = [System.Windows.Visibility]::Collapsed
+        $panel.Visibility = [System.Windows.Visibility]::Visible
+        Show-RecentDetailIfAvailable
+        Reset-HudSessionToRoot
+        $root.Focus() | Out-Null
+    }
 
     function Update-RecentDetailWindow {
         param(
@@ -656,6 +995,10 @@ function Show-HudWindow {
             [System.Windows.Input.MouseButtonEventArgs]$Event
         )
 
+        if ($editorPanel.Visibility -eq [System.Windows.Visibility]::Visible) {
+            return
+        }
+
         $source = $Event.OriginalSource
         while ($null -ne $source) {
             if ($source -is [System.Windows.Controls.Button] -or $source -is [System.Windows.Controls.TextBox]) {
@@ -825,6 +1168,10 @@ function Show-HudWindow {
             [System.Windows.Input.KeyEventArgs]$Event
         )
 
+        if ($editorPanel.Visibility -eq [System.Windows.Visibility]::Visible) {
+            return
+        }
+
         if ([System.Windows.Input.Keyboard]::Modifiers -band [System.Windows.Input.ModifierKeys]::Control) {
             return
         }
@@ -878,6 +1225,10 @@ function Show-HudWindow {
             [System.Windows.Input.TextCompositionEventArgs]$Event
         )
 
+        if ($editorPanel.Visibility -eq [System.Windows.Visibility]::Visible) {
+            return
+        }
+
         if ($Event.Text.Length -eq 1 -and [char]::IsLetterOrDigit($Event.Text[0])) {
             Append-HudTextFilter -Text $Event.Text
             $Event.Handled = $true
@@ -895,6 +1246,91 @@ function Show-HudWindow {
     $window.Add_PreviewMouseLeftButtonDown({ param($sender, $event) Handle-HudMouseButton -Button $event.ChangedButton -Event $event })
     $window.Add_PreviewMouseRightButtonDown({ param($sender, $event) Handle-HudMouseButton -Button $event.ChangedButton -Event $event })
     $minimizeButton.Add_Click({ Hide-HudSession })
+    $editItemsButton.Add_Click({ Show-EditorPanel })
+    $editorCategoryList.Add_SelectionChanged({ Refresh-EditorGroupList })
+    $editorGroupList.Add_SelectionChanged({
+        $group = Get-EditorSelectedGroup
+        $editorGroupNameBox.Text = if ($null -ne $group) { [string]$group.name } else { '' }
+        Refresh-EditorFeatureList
+    })
+    $editorFeatureList.Add_SelectionChanged({ Refresh-EditorFeatureFields })
+    $editorCategoryNameBox.Add_LostFocus({ Apply-EditorCategoryName })
+    $editorGroupNameBox.Add_LostFocus({ Apply-EditorGroupName })
+    $editorAddCategoryButton.Add_Click({
+        $newCategory = [pscustomobject]@{
+            name = 'NewCategory'
+            groups = @([pscustomobject]@{
+                name = 'NewGroup'
+                features = @([pscustomobject]@{
+                    title = 'New feature（新しい機能）'
+                    bitTag = '1'
+                    description = '説明を入力してください。'
+                })
+            })
+        }
+        $State.Items = @($State.Items) + $newCategory
+        Refresh-EditorCategoryList
+        $editorCategoryList.SelectedIndex = $editorCategoryList.Items.Count - 1
+        Set-EditorStatus 'Added category.'
+    })
+    $editorDeleteCategoryButton.Add_Click({
+        if ($editorCategoryList.SelectedIndex -lt 0) { return }
+        $category = Get-EditorSelectedCategory
+        $State.Items = @($State.Items | Where-Object { $_ -ne $category })
+        Refresh-EditorCategoryList
+        Set-EditorStatus 'Deleted category.'
+    })
+    $editorAddGroupButton.Add_Click({
+        $category = Get-EditorSelectedCategory
+        if ($null -eq $category) { return }
+        $newGroup = [pscustomobject]@{
+            name = 'NewGroup'
+            features = @([pscustomobject]@{
+                title = 'New feature（新しい機能）'
+                bitTag = '1'
+                description = '説明を入力してください。'
+            })
+        }
+        Set-HudProperty -Target $category -Name 'groups' -Value (@($category.groups) + $newGroup)
+        Refresh-EditorGroupList
+        $editorGroupList.SelectedIndex = $editorGroupList.Items.Count - 1
+        Set-EditorStatus 'Added group.'
+    })
+    $editorDeleteGroupButton.Add_Click({
+        $category = Get-EditorSelectedCategory
+        $group = Get-EditorSelectedGroup
+        if ($null -eq $category -or $null -eq $group) { return }
+        Set-HudProperty -Target $category -Name 'groups' -Value @(@($category.groups) | Where-Object { $_ -ne $group })
+        Refresh-EditorGroupList
+        Set-EditorStatus 'Deleted group.'
+    })
+    $editorAddFeatureButton.Add_Click({
+        $group = Get-EditorSelectedGroup
+        if ($null -eq $group) { return }
+        $newFeature = [pscustomobject]@{
+            title = 'New feature（新しい機能）'
+            bitTag = '1'
+            description = '説明を入力してください。'
+        }
+        Set-HudProperty -Target $group -Name 'features' -Value (@($group.features) + $newFeature)
+        Refresh-EditorFeatureList
+        $editorFeatureList.SelectedIndex = $editorFeatureList.Items.Count - 1
+        Set-EditorStatus 'Added feature.'
+    })
+    $editorDeleteFeatureButton.Add_Click({
+        $group = Get-EditorSelectedGroup
+        $feature = Get-EditorSelectedFeature
+        if ($null -eq $group -or $null -eq $feature) { return }
+        Set-HudProperty -Target $group -Name 'features' -Value @(@($group.features) | Where-Object { $_ -ne $feature })
+        Refresh-EditorFeatureList
+        Set-EditorStatus 'Deleted feature.'
+    })
+    $editorSaveButton.Add_Click({
+        Save-EditorCurrentFields
+        Save-HudJson -Path $script:DefaultHudDataPath -Items @($State.Items)
+        Set-EditorStatus "Saved: $script:DefaultHudDataPath"
+    })
+    $editorCloseButton.Add_Click({ Close-EditorPanel })
     $closeButton.Add_Click({ $window.Close() })
     $recentCloseButton.Add_Click({ $recentPanel.Visibility = [System.Windows.Visibility]::Collapsed })
     $recentCopyShortcutButton.Add_Click({
