@@ -1,22 +1,23 @@
 ﻿[
   {
-    "name": "Terminalaa",
+    "name": "Terminalaaaaaa",
     "groups": [
       {
-        "name": "Git",
+        "name": "Giaaaa",
         "features": [
           {
             "title": "Status（変更状況を確認）",
             "bitTag": "1",
-            "shortcut": "git status --short",
-            "copyable": true,
-            "description": "作業ツリーの変更状況を短い形式で確認する"
+            "shortcut": "git status --shortd",
+            "description": "作業ツリーの変更状asfa況を短い形式で確認するapdaffsfa",
+            "copyable": true
           },
           {
             "title": "Before commit（コミット前確認）",
             "bitTag": "0",
             "description": "コミット前に確認する項目\n\n1. git status --short で含めるファイルを確認する。\n2. git diff で差分を見る。\n3. 生成物や一時ファイルが混ざっていないか確認する",
-            "shortcut": "afasdfa\r\nasdfasdfa\r\nasfasdf\r\nfdasfsda"
+            "shortcut": "afasdfa\r\nasdfasdfad\r\nasfasdfs\r\nfdasfsda",
+            "copyable": true
           }
         ]
       }
@@ -26,14 +27,14 @@
     "name": "Workflow",
     "groups": [
       {
-        "name": "Template",
+        "name": "Templateaaaaa",
         "features": [
           {
             "title": "Meeting note（打ち合わせメモ）aa",
             "bitTag": "1",
-            "shortcut": "目的:\n決定事項:\n未決事項:\n次のアクション:",
+            "shortcut": "目的:\n決定事項:\n未決事項:\n次のアクション:asdfa",
             "copyable": true,
-            "description": "短い打ち合わせメモのテンプレート。必要な項目だけ残して使う。"
+            "description": "短い打ち合わせメモのテンプレート。必要な項目だけ残して使う。asdfaasdfsssafsdasdfas"
           }
         ]
       }

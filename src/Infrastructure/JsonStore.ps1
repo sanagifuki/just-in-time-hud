@@ -129,6 +129,7 @@ function Read-HudSettings {
         panelY = 96
         recentPanelX = 464
         recentPanelY = 96
+        saveWindowPositionOnMove = $false
         panelWidth = 420
         panelHeight = 360
         fontFamily = 'Yu Gothic UI'
@@ -160,7 +161,7 @@ function Read-HudSettings {
     }
 
     $settings = Remove-JsoncComments -Text (Get-Content -LiteralPath $Path -Raw -Encoding UTF8) | ConvertFrom-Json
-    foreach ($name in @('panelX', 'panelY', 'recentPanelX', 'recentPanelY', 'panelWidth', 'panelHeight', 'fontFamily', 'titleFontSize', 'detailTitleFontSize', 'featureTitleFontSize', 'filterFontSize', 'listFontSize', 'detailFontSize')) {
+    foreach ($name in @('panelX', 'panelY', 'recentPanelX', 'recentPanelY', 'saveWindowPositionOnMove', 'panelWidth', 'panelHeight', 'fontFamily', 'titleFontSize', 'detailTitleFontSize', 'featureTitleFontSize', 'filterFontSize', 'listFontSize', 'detailFontSize')) {
         if ($null -eq $settings.$name) {
             $settings | Add-Member -NotePropertyName $name -NotePropertyValue $defaults.$name -Force
         }

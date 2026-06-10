@@ -1,6 +1,6 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: f2c0206
+# Source commit: 4572c11
 
 $script:EmbeddedHudDataJson = @'
 [
@@ -507,6 +507,9 @@ function Show-HudWindow {
     $script:HudEditorRefreshing = $false
     $script:HudEditorDirty = $false
     $script:HudEditorCloseButtonClosing = $false
+    $script:HudDragTarget = $null
+    $script:HudDragStartPoint = $null
+    $script:HudDragStartMargin = $null
 
     [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -904,6 +907,51 @@ function Show-HudWindow {
     function Set-EditorStatus {
         param([string]$Text)
         $editorStatusText.Text = $Text
+    }
+
+    function global:Start-HudPanelDrag {
+        param(
+            [Parameter(Mandatory = $true)]
+            [System.Windows.FrameworkElement]$Target,
+            [Parameter(Mandatory = $true)]
+            [System.Windows.Input.MouseButtonEventArgs]$Event
+        )
+
+        $script:HudDragTarget = $Target
+        $script:HudDragStartPoint = $Event.GetPosition($root)
+        $script:HudDragStartMargin = $Target.Margin
+        $Target.CaptureMouse() | Out-Null
+        $Event.Handled = $true
+    }
+
+    function global:Move-HudPanelDrag {
+        param([Parameter(Mandatory = $true)][System.Windows.Input.MouseEventArgs]$Event)
+
+        if ($null -eq $script:HudDragTarget) {
+            return
+        }
+
+        $point = $Event.GetPosition($root)
+        $dx = $point.X - $script:HudDragStartPoint.X
+        $dy = $point.Y - $script:HudDragStartPoint.Y
+        $left = [Math]::Max(0, $script:HudDragStartMargin.Left + $dx)
+        $top = [Math]::Max(0, $script:HudDragStartMargin.Top + $dy)
+        $script:HudDragTarget.Margin = [System.Windows.Thickness]::new($left, $top, 0, 0)
+        $Event.Handled = $true
+    }
+
+    function global:Stop-HudPanelDrag {
+        param([Parameter(Mandatory = $true)][System.Windows.Input.MouseButtonEventArgs]$Event)
+
+        if ($null -eq $script:HudDragTarget) {
+            return
+        }
+
+        $script:HudDragTarget.ReleaseMouseCapture()
+        $script:HudDragTarget = $null
+        $script:HudDragStartPoint = $null
+        $script:HudDragStartMargin = $null
+        $Event.Handled = $true
     }
 
     function Set-EditorLabelText {
@@ -1799,6 +1847,9 @@ function Show-HudWindow {
             if ($source -is [System.Windows.Controls.Button] -or $source -is [System.Windows.Controls.TextBox]) {
                 return
             }
+            if ($source -is [System.Windows.FrameworkElement] -and $source.Name -in @('TitleMarkerText', 'TitleText', 'RecentPathText', 'RecentFeatureTitleText')) {
+                return
+            }
             $source = [System.Windows.Media.VisualTreeHelper]::GetParent($source)
         }
 
@@ -2042,6 +2093,14 @@ function Show-HudWindow {
     $detail.Add_PreviewTextInput({ param($sender, $event) Handle-HudTextInput -Event $event })
     $window.Add_PreviewMouseLeftButtonDown({ param($sender, $event) Handle-HudMouseButton -Button $event.ChangedButton -Event $event })
     $window.Add_PreviewMouseRightButtonDown({ param($sender, $event) Handle-HudMouseButton -Button $event.ChangedButton -Event $event })
+    $titleMarker.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $panel -Event $event }.GetNewClosure())
+    $title.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $panel -Event $event }.GetNewClosure())
+    $panel.Add_MouseMove({ param($sender, $event) Move-HudPanelDrag -Event $event }.GetNewClosure())
+    $panel.Add_MouseLeftButtonUp({ param($sender, $event) Stop-HudPanelDrag -Event $event }.GetNewClosure())
+    $recentPathText.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $recentPanel -Event $event }.GetNewClosure())
+    $recentFeatureTitleText.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $recentPanel -Event $event }.GetNewClosure())
+    $recentPanel.Add_MouseMove({ param($sender, $event) Move-HudPanelDrag -Event $event }.GetNewClosure())
+    $recentPanel.Add_MouseLeftButtonUp({ param($sender, $event) Stop-HudPanelDrag -Event $event }.GetNewClosure())
     $minimizeButton.Add_Click({ Hide-HudSession })
     $editItemsButton.Add_Click({ Show-EditorPanel })
     $closeButton.Add_Click({ $window.Close() })
