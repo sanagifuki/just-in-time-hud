@@ -1,6 +1,6 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: a7a76d5
+# Source commit: bcb39e1
 
 $script:EmbeddedHudDataJson = @'
 [
@@ -366,7 +366,6 @@ function New-HudState {
         SelectedGroup = $null
         SelectedFeature = $null
         TextFilter = ''
-        BitFilter = ''
     }
 }
 
@@ -393,13 +392,10 @@ function Get-HudCandidates {
         }
         'Feature' {
             $items = @($State.SelectedGroup.features)
-            if ($State.BitFilter) {
-                $items = @($items | Where-Object { $_.bitTag.StartsWith($State.BitFilter, [System.StringComparison]::OrdinalIgnoreCase) })
-            }
             if ($State.TextFilter) {
                 $items = @($items | Where-Object { Test-HudInitialMatch -Text $_.title -Filter $State.TextFilter })
             }
-            return @($items | ForEach-Object { [pscustomobject]@{ Label = "$(ConvertTo-HudBitDisplayText -BitText $_.bitTag)  $($_.title)"; Value = $_ } })
+            return @($items | ForEach-Object { [pscustomobject]@{ Label = $_.title; Value = $_ } })
         }
         'Detail' {
             return @([pscustomobject]@{ Label = $State.SelectedFeature.title; Value = $State.SelectedFeature })
@@ -457,7 +453,6 @@ function Reset-HudFilter {
     )
 
     $State.TextFilter = ''
-    $State.BitFilter = ''
 }
 
 #endregion src/Domain/HudModel.ps1
@@ -1650,7 +1645,7 @@ function Show-HudWindow {
             $featureTitle.Text = $State.SelectedFeature.title
         }
         else {
-            $filter.Text = "Text: $($State.TextFilter)    Bit: $(ConvertTo-HudBitDisplayText -BitText $State.BitFilter)"
+            $filter.Text = "Text: $($State.TextFilter)"
             $filterRow.Height = [System.Windows.GridLength]::Auto
             $title.FontSize = $titleFontSize
             $featureTitle.Visibility = [System.Windows.Visibility]::Collapsed
@@ -1696,7 +1691,7 @@ function Show-HudWindow {
             }
 
             if ($State.Level -eq 'Feature') {
-                $detail.Text = "キー入力 or マウスクリックで絞り込み。候補が1件になると自動で詳細画面へ進む。`r`nEsc: 戻る, 左クリック: $($script:HudBitLabels.one), 右クリック: $($script:HudBitLabels.zero), Tab: 選択中に遷移"
+                $detail.Text = "キー入力で絞り込み。候補が1件になると自動で詳細画面へ進む。`r`nEsc: 戻る, 左クリック: 上, 右クリック: 下, 1/2/3: 上から選択, Tab: 選択中に遷移"
             }
             else {
                 $detail.Text = "先頭文字のキー入力で絞り込み。候補が1件になると自動で次へ進む。`r`nEsc: 戻る, 左クリック: 上, 右クリック: 下, 1/2/3: 上から選択, Tab: 選択中に遷移"
@@ -1736,7 +1731,6 @@ function Show-HudWindow {
         }
         $script:HudIsRetreated = $false
         Set-HudWindowMode
-        Invoke-AutoAdvanceIfSingle
         Refresh-HudView
         Show-RecentDetailIfAvailable
         $window.Activate() | Out-Null
@@ -1810,7 +1804,7 @@ function Show-HudWindow {
             [int]$Delta
         )
 
-        if ($State.Level -notin 'Root', 'Group') {
+        if ($State.Level -notin 'Root', 'Group', 'Feature') {
             return
         }
         if ($list.Items.Count -eq 0) {
@@ -1827,6 +1821,20 @@ function Show-HudWindow {
 
         $list.SelectedIndex = $nextIndex
         $list.ScrollIntoView($list.SelectedItem)
+    }
+
+    function Invoke-AutoAdvanceIfSingle {
+        if ($State.Level -eq 'Detail') {
+            return
+        }
+
+        while ($State.Level -ne 'Detail') {
+            $candidates = Get-HudCandidates -State $State
+            if ($candidates.Count -ne 1) {
+                return
+            }
+            Move-ToCandidate -Selected $candidates[0].Value
+        }
     }
 
     function Handle-HudMouseButton {
@@ -1853,22 +1861,15 @@ function Show-HudWindow {
             $source = [System.Windows.Media.VisualTreeHelper]::GetParent($source)
         }
 
-        if ($State.Level -in 'Root', 'Group') {
-            if ($Button -eq [System.Windows.Input.MouseButton]::Left) {
-                Move-HudListSelection -Delta -1
-            }
-            elseif ($Button -eq [System.Windows.Input.MouseButton]::Right) {
-                Move-HudListSelection -Delta 1
-            }
-            else {
-                return
-            }
-
-            $Event.Handled = $true
+        if ($Button -eq [System.Windows.Input.MouseButton]::Left) {
+            Move-HudListSelection -Delta -1
+        }
+        elseif ($Button -eq [System.Windows.Input.MouseButton]::Right) {
+            Move-HudListSelection -Delta 1
+        }
+        else {
             return
         }
-
-        Add-HudBitInput -Button $Button
         $Event.Handled = $true
     }
 
@@ -1892,22 +1893,8 @@ function Show-HudWindow {
         Refresh-HudView
     }
 
-    function Invoke-AutoAdvanceIfSingle {
-        if ($State.Level -eq 'Detail') {
-            return
-        }
-
-        while ($State.Level -ne 'Detail') {
-            $candidates = Get-HudCandidates -State $State
-            if ($candidates.Count -ne 1) {
-                return
-            }
-            Move-ToCandidate -Selected $candidates[0].Value
-        }
-    }
-
     function Back-HudLevel {
-        if ($State.TextFilter -or $State.BitFilter) {
+        if ($State.TextFilter) {
             Reset-HudFilter -State $State
         }
         else {
@@ -1937,37 +1924,9 @@ function Show-HudWindow {
         if ($State.TextFilter.Length -gt 0) {
             $State.TextFilter = $State.TextFilter.Substring(0, $State.TextFilter.Length - 1)
         }
-        elseif ($State.BitFilter.Length -gt 0) {
-            $State.BitFilter = $State.BitFilter.Substring(0, $State.BitFilter.Length - 1)
-        }
         else {
             return
         }
-        Invoke-AutoAdvanceIfSingle
-        Refresh-HudView
-    }
-
-    function Add-HudBitInput {
-        param(
-            [Parameter(Mandatory = $true)]
-            [System.Windows.Input.MouseButton]$Button
-        )
-
-        if ($State.Level -ne 'Feature') {
-            return
-        }
-        if ($Button -eq [System.Windows.Input.MouseButton]::Left) {
-            $State.BitFilter += '1'
-        }
-        elseif ($Button -eq [System.Windows.Input.MouseButton]::Right) {
-            $State.BitFilter += '0'
-        }
-        else {
-            return
-        }
-
-        $root.Focus() | Out-Null
-        Invoke-AutoAdvanceIfSingle
         Refresh-HudView
     }
 
@@ -2166,7 +2125,6 @@ function Show-HudWindow {
         )
     })
 
-    Invoke-AutoAdvanceIfSingle
     Refresh-HudView
     [void]$window.ShowDialog()
 }

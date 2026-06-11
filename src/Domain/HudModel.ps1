@@ -11,7 +11,6 @@ function New-HudState {
         SelectedGroup = $null
         SelectedFeature = $null
         TextFilter = ''
-        BitFilter = ''
     }
 }
 
@@ -38,13 +37,10 @@ function Get-HudCandidates {
         }
         'Feature' {
             $items = @($State.SelectedGroup.features)
-            if ($State.BitFilter) {
-                $items = @($items | Where-Object { $_.bitTag.StartsWith($State.BitFilter, [System.StringComparison]::OrdinalIgnoreCase) })
-            }
             if ($State.TextFilter) {
                 $items = @($items | Where-Object { Test-HudInitialMatch -Text $_.title -Filter $State.TextFilter })
             }
-            return @($items | ForEach-Object { [pscustomobject]@{ Label = "$(ConvertTo-HudBitDisplayText -BitText $_.bitTag)  $($_.title)"; Value = $_ } })
+            return @($items | ForEach-Object { [pscustomobject]@{ Label = $_.title; Value = $_ } })
         }
         'Detail' {
             return @([pscustomobject]@{ Label = $State.SelectedFeature.title; Value = $State.SelectedFeature })
@@ -102,5 +98,4 @@ function Reset-HudFilter {
     )
 
     $State.TextFilter = ''
-    $State.BitFilter = ''
 }
