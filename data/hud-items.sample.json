@@ -10,7 +10,8 @@
             "bitTag": "1",
             "shortcut": "git status --shortd",
             "description": "作業ツリーの変更状asfa況を短い形式で確認するapdaffsfa",
-            "copyable": true
+            "copyable": true,
+            "favorite": true
           },
           {
             "title": "Before commit（コミット前確認）",
@@ -34,7 +35,8 @@
             "bitTag": "1",
             "shortcut": "目的:\n決定事項:\n未決事項:\n次のアクション:asdfa",
             "copyable": true,
-            "description": "短い打ち合わせメモのテンプレート。必要な項目だけ残して使う。asdfaasdfsssafsdasdfas"
+            "description": "短い打ち合わせメモのテンプレート。必要な項目だけ残して使う。asdfaasdfsssafsdasdfas",
+            "favorite": true
           }
         ]
       }
