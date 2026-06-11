@@ -1,6 +1,6 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: 4572c11
+# Source commit: a7a76d5
 
 $script:EmbeddedHudDataJson = @'
 [

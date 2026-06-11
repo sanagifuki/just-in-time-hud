@@ -45,7 +45,6 @@ function Show-HudWindow {
     $script:HudDragTarget = $null
     $script:HudDragStartPoint = $null
     $script:HudDragStartMargin = $null
-    $script:HudDragTargetName = ''
 
     [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -454,7 +453,6 @@ function Show-HudWindow {
         )
 
         $script:HudDragTarget = $Target
-        $script:HudDragTargetName = [string]$Target.Name
         $script:HudDragStartPoint = $Event.GetPosition($root)
         $script:HudDragStartMargin = $Target.Margin
         $Target.CaptureMouse() | Out-Null
@@ -477,36 +475,6 @@ function Show-HudWindow {
         $Event.Handled = $true
     }
 
-    function Save-HudPanelPositionIfEnabled {
-        param(
-            [Parameter(Mandatory = $true)]
-            [string]$TargetName,
-            [Parameter(Mandatory = $true)]
-            [System.Windows.Thickness]$Margin
-        )
-
-        if (-not [bool]$Settings.saveWindowPositionOnMove) {
-            return
-        }
-
-        if (-not (Test-Path -LiteralPath $script:DefaultHudSettingsPath)) {
-            return
-        }
-
-        $xName = if ($TargetName -eq 'RecentPanel') { 'recentPanelX' } else { 'panelX' }
-        $yName = if ($TargetName -eq 'RecentPanel') { 'recentPanelY' } else { 'panelY' }
-        $x = [int][Math]::Round($Margin.Left)
-        $y = [int][Math]::Round($Margin.Top)
-
-        $text = Get-Content -LiteralPath $script:DefaultHudSettingsPath -Raw -Encoding UTF8
-        $text = [regex]::Replace($text, "(?m)(`"$xName`"\s*:\s*)-?\d+", "`${1}$x")
-        $text = [regex]::Replace($text, "(?m)(`"$yName`"\s*:\s*)-?\d+", "`${1}$y")
-        Set-Content -LiteralPath $script:DefaultHudSettingsPath -Value $text -Encoding UTF8
-
-        $Settings.$xName = $x
-        $Settings.$yName = $y
-    }
-
     function global:Stop-HudPanelDrag {
         param([Parameter(Mandatory = $true)][System.Windows.Input.MouseButtonEventArgs]$Event)
 
@@ -514,12 +482,10 @@ function Show-HudWindow {
             return
         }
 
-        Save-HudPanelPositionIfEnabled -TargetName $script:HudDragTargetName -Margin $script:HudDragTarget.Margin
         $script:HudDragTarget.ReleaseMouseCapture()
         $script:HudDragTarget = $null
         $script:HudDragStartPoint = $null
         $script:HudDragStartMargin = $null
-        $script:HudDragTargetName = ''
         $Event.Handled = $true
     }
 

@@ -7,9 +7,6 @@
   "recentPanelX": 1480,
   "recentPanelY": 395,
 
-  // trueならドラッグ移動後の座標をこの設定ファイルへ上書き保存する。
-  "saveWindowPositionOnMove": false,
-
   // HUDパネルのサイズ。
   "panelWidth": 420,
   "panelHeight": 360,
