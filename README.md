@@ -204,6 +204,7 @@ HUD右上の `Edit` から、親分類・中分類・機能の追加、削除、
   "filterFontSize": 12,
   "listFontSize": 12,
   "detailFontSize": 12,
+  "snippetMaxHeight": 162,
   "bitLabels": {
     "one": "1",
     "zero": "0"
@@ -226,6 +227,7 @@ HUD右上の `Edit` から、親分類・中分類・機能の追加、削除、
 | `panelWidth`, `panelHeight` | 各HUDパネルのサイズ |
 | `fontFamily` | HUD全体のフォント |
 | `featureTitleFontSize` | 詳細画面の機能名タイトルサイズ |
+| `snippetMaxHeight` | Snippets 1件あたりの最大表示高さ |
 | `bitLabels.one` | `1` の表示文字 |
 | `bitLabels.zero` | `0` の表示文字 |
 | `backgroundRgba` | 全画面背景のRGBA |

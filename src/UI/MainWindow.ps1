@@ -56,6 +56,7 @@ function Show-HudWindow {
     $script:HudFavoriteFeatureTitleFontSize = $featureTitleFontSize
     $script:HudFavoriteFilterFontSize = $filterFontSize
     $script:HudFavoriteDetailFontSize = $detailFontSize
+    $script:HudSnippetMaxHeight = [Math]::Max(40, [double]$Settings.snippetMaxHeight)
     $script:HudFavoriteButton = $null
     $script:HudEditorWindow = $null
     $script:HudEditorRefreshing = $false
@@ -214,32 +215,27 @@ function Show-HudWindow {
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <Grid Grid.Row="0"
-                              Margin="0,0,0,14">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
+                        <ScrollViewer Grid.Row="0"
+                                      Margin="0,0,0,14"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      CanContentScroll="False">
+                            <StackPanel>
                             <TextBlock Name="ShortcutLabel"
-                                       Grid.Row="0"
                                        Text="Snippets:"
                                        FontFamily="$fontFamily"
                                        FontSize="$filterFontSize"
                                        Foreground="#6B7280"
                                        Margin="0,0,0,4"/>
                             <StackPanel Name="SnippetList"
-                                        Grid.Row="1"
                                         Margin="0,0,0,16"/>
-                            <TextBlock Grid.Row="2"
+                            <TextBlock
                                        Text="Description:"
                                        FontFamily="$fontFamily"
                                        FontSize="$filterFontSize"
                                        Foreground="#6B7280"
                                        Margin="0,0,0,4"/>
                             <TextBox Name="DescriptionText"
-                                     Grid.Row="3"
                                      FontFamily="$fontFamily"
                                      FontSize="$detailFontSize"
                                      Foreground="#374151"
@@ -250,9 +246,10 @@ function Show-HudWindow {
                                      IsReadOnlyCaretVisible="False"
                                      TextWrapping="Wrap"
                                      AcceptsReturn="True"
-                                     VerticalScrollBarVisibility="Auto"
+                                     VerticalScrollBarVisibility="Disabled"
                                      HorizontalScrollBarVisibility="Disabled"/>
-                        </Grid>
+                            </StackPanel>
+                        </ScrollViewer>
                         <Border Grid.Row="1"
                                 BorderBrush="#D1D5DB"
                                 BorderThickness="0,1,0,0"
@@ -280,8 +277,6 @@ function Show-HudWindow {
                 Visibility="Visible">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
@@ -316,60 +311,60 @@ function Show-HudWindow {
                         FontSize="$titleFontSize"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Top"/>
-                <Border Name="RecentFeatureTitleDragArea"
-                        Grid.Row="1"
-                        Background="Transparent"
-                        Margin="0,4,0,8">
-                    <TextBlock Name="RecentFeatureTitleText"
-                               FontFamily="$fontFamily"
-                               FontSize="$featureTitleFontSize"
-                               FontWeight="SemiBold"
-                               Foreground="#111827"
-                               TextWrapping="Wrap"/>
-                </Border>
-                <Grid Grid.Row="2"
-                      Name="RecentShortcutArea">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0"
-                               Text="Snippets:"
-                               FontFamily="$fontFamily"
-                               FontSize="$filterFontSize"
-                               Foreground="#6B7280"
-                               Margin="0,0,0,4"/>
-                    <StackPanel Name="RecentSnippetList"
-                                Grid.Row="1"
-                                Margin="0,0,0,12"/>
-                </Grid>
-                <Grid Grid.Row="3">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0"
-                               Text="Description:"
-                               FontFamily="$fontFamily"
-                               FontSize="$filterFontSize"
-                               Foreground="#6B7280"
-                               Margin="0,0,0,4"/>
-                    <TextBox Name="RecentDescriptionText"
-                             Grid.Row="1"
-                             FontFamily="$fontFamily"
-                             FontSize="$detailFontSize"
-                             Foreground="#374151"
-                             Background="Transparent"
-                             BorderThickness="0"
-                             Padding="0"
-                             IsReadOnly="True"
-                             IsReadOnlyCaretVisible="False"
-                             TextWrapping="Wrap"
-                             AcceptsReturn="True"
-                             VerticalScrollBarVisibility="Auto"
-                             HorizontalScrollBarVisibility="Disabled"/>
-                </Grid>
-                <StackPanel Grid.Row="4"
+                <ScrollViewer Grid.Row="1"
+                              Margin="0,4,0,0"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              CanContentScroll="False">
+                    <StackPanel>
+                        <Border Name="RecentFeatureTitleDragArea"
+                                Background="Transparent"
+                                Margin="0,0,0,8">
+                            <TextBlock Name="RecentFeatureTitleText"
+                                       FontFamily="$fontFamily"
+                                       FontSize="$featureTitleFontSize"
+                                       FontWeight="SemiBold"
+                                       Foreground="#111827"
+                                       TextWrapping="Wrap"/>
+                        </Border>
+                        <Grid Name="RecentShortcutArea">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0"
+                                       Text="Snippets:"
+                                       FontFamily="$fontFamily"
+                                       FontSize="$filterFontSize"
+                                       Foreground="#6B7280"
+                                       Margin="0,0,0,4"/>
+                            <StackPanel Name="RecentSnippetList"
+                                        Grid.Row="1"
+                                        Margin="0,0,0,12"/>
+                        </Grid>
+                        <StackPanel>
+                            <TextBlock Text="Description:"
+                                       FontFamily="$fontFamily"
+                                       FontSize="$filterFontSize"
+                                       Foreground="#6B7280"
+                                       Margin="0,0,0,4"/>
+                            <TextBox Name="RecentDescriptionText"
+                                     FontFamily="$fontFamily"
+                                     FontSize="$detailFontSize"
+                                     Foreground="#374151"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     Padding="0"
+                                     IsReadOnly="True"
+                                     IsReadOnlyCaretVisible="False"
+                                     TextWrapping="Wrap"
+                                     AcceptsReturn="True"
+                                     VerticalScrollBarVisibility="Disabled"
+                                     HorizontalScrollBarVisibility="Disabled"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+                <StackPanel Grid.Row="2"
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             Margin="0,6,0,2">
@@ -572,10 +567,6 @@ function Show-HudWindow {
             $snippetBorder.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Left
 
             $snippetGrid = [System.Windows.Controls.Grid]::new()
-            $snippetGrid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
-            $snippetGrid.ColumnDefinitions[0].Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
-            $snippetGrid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
-            $snippetGrid.ColumnDefinitions[1].Width = [System.Windows.GridLength]::Auto
 
             $snippetTextBox = [System.Windows.Controls.TextBox]::new()
             $snippetTextBox.Text = [string]$snippet.text
@@ -591,7 +582,9 @@ function Show-HudWindow {
             $snippetTextBox.IsReadOnlyCaretVisible = $false
             $snippetTextBox.AcceptsReturn = $true
             $snippetTextBox.TextWrapping = [System.Windows.TextWrapping]::Wrap
-            [System.Windows.Controls.Grid]::SetColumn($snippetTextBox, 0)
+            $snippetTextBox.MaxHeight = $script:HudSnippetMaxHeight
+            $snippetTextBox.VerticalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Hidden
+            $snippetTextBox.HorizontalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Disabled
             [void]$snippetGrid.Children.Add($snippetTextBox)
 
             $snippetCopyButton = [System.Windows.Controls.Button]::new()
@@ -600,10 +593,13 @@ function Show-HudWindow {
             $snippetCopyButton.Height = 20
             $snippetCopyButton.Padding = [System.Windows.Thickness]::new(6, 0, 6, 0)
             $snippetCopyButton.BorderThickness = [System.Windows.Thickness]::new(0)
-            $snippetCopyButton.Background = [System.Windows.Media.Brushes]::Transparent
-            $snippetCopyButton.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#6B7280')
+            $snippetCopyButtonBackground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#D1D5DB')
+            $snippetCopyButtonBackground.Opacity = 0.85
+            $snippetCopyButton.Background = $snippetCopyButtonBackground
+            $snippetCopyButton.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#374151')
             $snippetCopyButton.FontFamily = $script:HudFavoriteFontFamily
             $snippetCopyButton.FontSize = $script:HudFavoriteFilterFontSize
+            $snippetCopyButton.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Right
             $snippetCopyButton.VerticalAlignment = [System.Windows.VerticalAlignment]::Top
             if (-not [bool]$snippet.copyable) {
                 $snippetCopyButton.Visibility = [System.Windows.Visibility]::Collapsed
@@ -627,7 +623,6 @@ function Show-HudWindow {
                 $resetTimer.Start()
                 $event.Handled = $true
             }.GetNewClosure())
-            [System.Windows.Controls.Grid]::SetColumn($snippetCopyButton, 1)
             [void]$snippetGrid.Children.Add($snippetCopyButton)
 
             $snippetBorder.Child = $snippetGrid
@@ -1631,9 +1626,22 @@ function Show-HudWindow {
             [System.Windows.Controls.Grid]::SetColumn($unfavoriteButton, 2)
             [void]$grid.Children.Add($unfavoriteButton)
 
+            $favoriteBodyScroll = [System.Windows.Controls.ScrollViewer]::new()
+            $favoriteBodyScroll.VerticalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Auto
+            $favoriteBodyScroll.HorizontalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Disabled
+            $favoriteBodyScroll.CanContentScroll = $false
+            $favoriteBodyScroll.Margin = [System.Windows.Thickness]::new(0, 4, 0, 0)
+            [System.Windows.Controls.Grid]::SetRow($favoriteBodyScroll, 1)
+            [System.Windows.Controls.Grid]::SetRowSpan($favoriteBodyScroll, 3)
+            [System.Windows.Controls.Grid]::SetColumnSpan($favoriteBodyScroll, 3)
+
+            $favoriteBody = [System.Windows.Controls.StackPanel]::new()
+            $favoriteBodyScroll.Content = $favoriteBody
+            [void]$grid.Children.Add($favoriteBodyScroll)
+
             $titleDragArea = [System.Windows.Controls.Border]::new()
             $titleDragArea.Background = [System.Windows.Media.Brushes]::Transparent
-            $titleDragArea.Margin = [System.Windows.Thickness]::new(0, 4, 0, 8)
+            $titleDragArea.Margin = [System.Windows.Thickness]::new(0, 0, 0, 8)
             $titleDragArea.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $border -Event $event }.GetNewClosure())
 
             $titleText = [System.Windows.Controls.TextBlock]::new()
@@ -1644,17 +1652,13 @@ function Show-HudWindow {
             $titleText.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#111827')
             $titleText.TextWrapping = [System.Windows.TextWrapping]::Wrap
             $titleDragArea.Child = $titleText
-            [System.Windows.Controls.Grid]::SetRow($titleDragArea, 1)
-            [System.Windows.Controls.Grid]::SetColumnSpan($titleDragArea, 3)
-            [void]$grid.Children.Add($titleDragArea)
+            [void]$favoriteBody.Children.Add($titleDragArea)
 
             $shortcutArea = [System.Windows.Controls.Grid]::new()
             $shortcutArea.RowDefinitions.Add([System.Windows.Controls.RowDefinition]::new())
             $shortcutArea.RowDefinitions[0].Height = [System.Windows.GridLength]::Auto
             $shortcutArea.RowDefinitions.Add([System.Windows.Controls.RowDefinition]::new())
             $shortcutArea.RowDefinitions[1].Height = [System.Windows.GridLength]::Auto
-            [System.Windows.Controls.Grid]::SetRow($shortcutArea, 2)
-            [System.Windows.Controls.Grid]::SetColumnSpan($shortcutArea, 3)
 
             $shortcutLabel = [System.Windows.Controls.TextBlock]::new()
             $shortcutLabel.Text = 'Snippets:'
@@ -1677,15 +1681,13 @@ function Show-HudWindow {
             else {
                 $shortcutArea.Visibility = [System.Windows.Visibility]::Collapsed
             }
-            [void]$grid.Children.Add($shortcutArea)
+            [void]$favoriteBody.Children.Add($shortcutArea)
 
             $descriptionGrid = [System.Windows.Controls.Grid]::new()
             $descriptionGrid.RowDefinitions.Add([System.Windows.Controls.RowDefinition]::new())
             $descriptionGrid.RowDefinitions[0].Height = [System.Windows.GridLength]::Auto
             $descriptionGrid.RowDefinitions.Add([System.Windows.Controls.RowDefinition]::new())
-            $descriptionGrid.RowDefinitions[1].Height = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
-            [System.Windows.Controls.Grid]::SetRow($descriptionGrid, 3)
-            [System.Windows.Controls.Grid]::SetColumnSpan($descriptionGrid, 3)
+            $descriptionGrid.RowDefinitions[1].Height = [System.Windows.GridLength]::Auto
 
             $descriptionLabel = [System.Windows.Controls.TextBlock]::new()
             $descriptionLabel.Text = 'Description:'
@@ -1708,11 +1710,11 @@ function Show-HudWindow {
             $descriptionTextBox.IsReadOnlyCaretVisible = $false
             $descriptionTextBox.TextWrapping = [System.Windows.TextWrapping]::Wrap
             $descriptionTextBox.AcceptsReturn = $true
-            $descriptionTextBox.VerticalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Auto
+            $descriptionTextBox.VerticalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Disabled
             $descriptionTextBox.HorizontalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Disabled
             [System.Windows.Controls.Grid]::SetRow($descriptionTextBox, 1)
             [void]$descriptionGrid.Children.Add($descriptionTextBox)
-            [void]$grid.Children.Add($descriptionGrid)
+            [void]$favoriteBody.Children.Add($descriptionGrid)
 
             $border.Child = $grid
             $border.Add_MouseMove({ param($sender, $event) Move-HudPanelDrag -Event $event }.GetNewClosure())
