@@ -204,7 +204,7 @@ HUD右上の `Edit` から、親分類・中分類・機能の追加、削除、
   "filterFontSize": 12,
   "listFontSize": 12,
   "detailFontSize": 12,
-  "snippetMaxHeight": 162,
+  "snippetMaxHeight": 80,
   "bitLabels": {
     "one": "1",
     "zero": "0"

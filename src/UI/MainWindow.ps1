@@ -1785,10 +1785,12 @@ function Show-HudWindow {
             if ($snippets.Count -gt 0) {
                 Add-HudSnippetRows -Target $snippetList -Snippets $snippets
                 $shortcutLabel.Visibility = [System.Windows.Visibility]::Visible
+                $snippetList.Visibility = [System.Windows.Visibility]::Visible
             }
             else {
                 $snippetList.Children.Clear()
                 $shortcutLabel.Visibility = [System.Windows.Visibility]::Collapsed
+                $snippetList.Visibility = [System.Windows.Visibility]::Collapsed
             }
             $descriptionText.Text = $feature.description
             Set-RecentDetail -Feature $feature

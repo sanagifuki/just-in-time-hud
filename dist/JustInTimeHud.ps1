@@ -1,9 +1,10 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: d0717e0
+# Source commit: e92c84b
 
 $script:EmbeddedHudDataJson = @'
-{
+[
+  {
   "name": "JustInTimeHUD",
   "groups": [
     {
@@ -35,11 +36,11 @@ $script:EmbeddedHudDataJson = @'
             "Tab: 選択中に遷移\n1/2/3: 上から選択",
             "Esc: 入力リセット / 前の画面へ戻る\nSpace: HUDを退避"
           ],
-            "description": "親分類・中分類・機能リストで使う基本操作です。\n\nキー入力で候補を絞り込み、候補が1件になると自動で次へ進みます。`左クリック/右クリック`は選択位置の移動、`Tab`と`1/2/3`は選択中項目への遷移に使います。\n\n`Esc`は入力リセットや前の画面へ戻る操作です。`Space`はHUDを退避します。"
+          "description": "親分類・中分類・機能リストで使う基本操作です。\n\nキー入力で候補を絞り込み、候補が1件になると自動で次へ進みます。`左クリック/右クリック`は選択位置の移動、`Tab`と`1/2/3`は選択中項目への遷移に使います。\n\n`Esc`は入力リセットや前の画面へ戻る操作です。`Space`はHUDを退避します。"
         },
         {
           "title": "Edit items（項目編集）",
-            "description": "右上のEditから項目編集画面を開けます。各機能を追加・削除できます。\n\n- Title: 後から探すときの機能名です。「English title（日本語説明）」形式にすると、キー入力で探しやすくなります。\n- Snippets: 実際にコピーして使うコマンド、定型文、手順、参照情報です。「---」だけの行で区切ると、複数Snippetとして登録されます。\n- Description: Snippetsの目的、使う場面、注意点などの補足説明です。メモとして活用できます。\n- copyable: 有効にすると、各Snippetに`Copy`ボタンが表示されます。favoriteを有効にすると、お気に入りウィンドウとして常に表示されるようになります。"
+          "description": "右上のEditから項目編集画面を開けます。各機能を追加・削除できます。\n\n- Title: 後から探すときの機能名です。「English title（日本語説明）」形式にすると、キー入力で探しやすくなります。\n- Snippets: 実際にコピーして使うコマンド、定型文、手順、参照情報です。「---」だけの行で区切ると、複数Snippetとして登録されます。\n- Description: Snippetsの目的、使う場面、注意点などの補足説明です。メモとして活用できます。\n- copyable: 有効にすると、各Snippetに`Copy`ボタンが表示されます。favoriteを有効にすると、お気に入りウィンドウとして常に表示されるようになります。"
         },
         {
           "title": "Read detail（詳細画面）",
@@ -47,17 +48,17 @@ $script:EmbeddedHudDataJson = @'
             "Copy: 対象Snippetをクリップボードへコピー",
             "Ctrl+C: 選択中のテキストをコピー"
           ],
-            "description": "詳細画面では、機能名、Snippets、Descriptionを確認できます。\n\nSnippetsは、コピーして使うコマンド、定型文、手順、参照情報です。`Copy`ボタンが表示されている場合は、押すとそのSnippetをクリップボードへコピーします。`Ctrl+C`で選択中のテキストをコピーすることもできます。\n\n長いSnippetsやDescriptionはスクロールして確認できます。Snippetごとの最大表示高さは`settings.jsonc`の`snippetMaxHeight`で調整できます。"
+          "description": "詳細画面では、機能名、Snippets、Descriptionを確認できます。\n\nSnippetsは、コピーして使うコマンド、定型文、手順、参照情報です。`Copy`ボタンが表示されている場合は、押すとそのSnippetをクリップボードへコピーします。`Ctrl+C`で選択中のテキストをコピーすることもできます。\n\n長いSnippetsやDescriptionはスクロールして確認できます。Snippetごとの最大表示高さは`settings.jsonc`の`snippetMaxHeight`で調整できます。"
         },
         {
           "title": "Settings（設定）",
-            "description": "`settings.jsonc`で、HUDの座標、サイズ、フォント、背景色、Snippet最大表示高さを調整できます。\n\n各項目の説明は、`settings.jsonc`内にコメントで記載されています。\n\n配布用の単一ファイルを使う場合、`hud-items.json`と`settings.jsonc`が同じフォルダに無ければ初回起動時に自動生成されます。"
+          "description": "`settings.jsonc`で、HUDの座標、サイズ、フォント、背景色、Snippet最大表示高さを調整できます。\n\n各項目の説明は、`settings.jsonc`内にコメントで記載されています。\n\n配布用の単一ファイルを使う場合、`hud-items.json`と`settings.jsonc`が同じフォルダに無ければ初回起動時に自動生成されます。"
         }
       ]
     }
   ]
-}
-
+  }
+]
 
 '@
 
@@ -93,7 +94,7 @@ $script:EmbeddedHudSettingsJsonc = @'
   "detailFontSize": 12,
 
   // Snippets 1件あたりの最大表示高さ。超えた分はバー非表示でスクロール可能。
-  "snippetMaxHeight": 162,
+  "snippetMaxHeight": 80,
 
   // 左クリック/右クリックの表示ラベル。内部値は 1 / 0 のまま。
   "bitLabels": {
@@ -298,7 +299,7 @@ function Read-HudSettings {
         filterFontSize = 12
         listFontSize = 14
         detailFontSize = 12
-        snippetMaxHeight = 162
+        snippetMaxHeight = 80
         bitLabels = [pscustomobject]@{
             one = '1'
             zero = '0'
@@ -2262,10 +2263,12 @@ function Show-HudWindow {
             if ($snippets.Count -gt 0) {
                 Add-HudSnippetRows -Target $snippetList -Snippets $snippets
                 $shortcutLabel.Visibility = [System.Windows.Visibility]::Visible
+                $snippetList.Visibility = [System.Windows.Visibility]::Visible
             }
             else {
                 $snippetList.Children.Clear()
                 $shortcutLabel.Visibility = [System.Windows.Visibility]::Collapsed
+                $snippetList.Visibility = [System.Windows.Visibility]::Collapsed
             }
             $descriptionText.Text = $feature.description
             Set-RecentDetail -Feature $feature

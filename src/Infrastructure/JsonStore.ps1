@@ -138,7 +138,7 @@ function Read-HudSettings {
         filterFontSize = 12
         listFontSize = 14
         detailFontSize = 12
-        snippetMaxHeight = 162
+        snippetMaxHeight = 80
         bitLabels = [pscustomobject]@{
             one = '1'
             zero = '0'
