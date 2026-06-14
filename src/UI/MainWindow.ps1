@@ -38,6 +38,9 @@ function Show-HudWindow {
     $script:HudRecentFeature = $null
     $script:HudRecentCategoryName = ''
     $script:HudRecentGroupName = ''
+    $script:HudRecentHistory = @()
+    $script:HudRecentHistoryIndex = 0
+    $script:HudRecentHistoryMax = 10
     $script:HudFavoritePanels = @()
     $script:HudFavoritePanelPositions = @{}
     $script:HudState = $State
@@ -101,74 +104,76 @@ function Show-HudWindow {
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <StackPanel Grid.Row="0"
-                            Orientation="Horizontal">
-                    <TextBlock Name="TitleMarkerText"
-                               Text="▮"
-                               FontFamily="$fontFamily"
-                               FontSize="$titleFontSize"
-                               FontWeight="SemiBold"
-                               Margin="0,0,2,0"/>
-                    <TextBlock Name="TitleText"
-                               FontFamily="$fontFamily"
-                               FontSize="$titleFontSize"
-                               FontWeight="SemiBold"
-                               Foreground="#1F2937"/>
-                </StackPanel>
-                <StackPanel Grid.Row="0"
-                            Orientation="Horizontal"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Top">
-                    <TextBlock Name="MainDragHandle"
-                               Text="・・・"
-                               Width="28"
-                               Height="20"
-                               TextAlignment="Center"
-                               Foreground="#9CA3AF"
-                               FontFamily="$fontFamily"
-                               FontSize="$filterFontSize"/>
-                    <Button Name="EditItemsButton"
-                            Content="Edit"
-                            Width="34"
-                            Height="20"
-                            Padding="0"
-                            BorderThickness="0"
-                            Background="Transparent"
-                            Foreground="#6B7280"
-                            FontFamily="$fontFamily"
-                            FontSize="$filterFontSize"/>
-                    <Button Name="FavoriteButton"
-                            Content="☆"
-                            Width="24"
-                            Height="20"
-                            Padding="0"
-                            BorderThickness="0"
-                            Background="Transparent"
-                            Foreground="#6B7280"
-                            FontFamily="$fontFamily"
-                            FontSize="$titleFontSize"
-                            Visibility="Collapsed"/>
-                    <Button Name="MinimizeButton"
-                            Content="ー"
-                            Width="24"
-                            Height="20"
-                            Padding="0"
-                            BorderThickness="0"
-                            Background="Transparent"
-                            Foreground="#6B7280"
-                            FontFamily="$fontFamily"
-                            FontSize="$titleFontSize"/>
-                    <Button Name="CloseButton"
-                            Content="×"
-                            Width="24"
-                            Height="20"
-                            Padding="0"
-                            BorderThickness="0"
-                            Background="Transparent"
-                            Foreground="#6B7280"
-                            FontFamily="$fontFamily"
-                            FontSize="$titleFontSize"/>
-                </StackPanel>
+                <Grid Name="MainHeaderDragArea"
+                      Grid.Row="0"
+                      Background="Transparent">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Name="TitleMarkerText"
+                                   Text="▮"
+                                   FontFamily="$fontFamily"
+                                   FontSize="$titleFontSize"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,2,0"/>
+                        <TextBlock Name="TitleText"
+                                   FontFamily="$fontFamily"
+                                   FontSize="$titleFontSize"
+                                   FontWeight="SemiBold"
+                                   Foreground="#1F2937"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top">
+                        <TextBlock Name="MainDragHandle"
+                                   Text="・・・"
+                                   Width="28"
+                                   Height="20"
+                                   TextAlignment="Center"
+                                   Foreground="#9CA3AF"
+                                   FontFamily="$fontFamily"
+                                   FontSize="$filterFontSize"/>
+                        <Button Name="EditItemsButton"
+                                Content="Edit"
+                                Width="34"
+                                Height="20"
+                                Padding="0"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                Foreground="#6B7280"
+                                FontFamily="$fontFamily"
+                                FontSize="$filterFontSize"/>
+                        <Button Name="FavoriteButton"
+                                Content="☆"
+                                Width="24"
+                                Height="20"
+                                Padding="0"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                Foreground="#6B7280"
+                                FontFamily="$fontFamily"
+                                FontSize="$titleFontSize"
+                                Visibility="Collapsed"/>
+                        <Button Name="MinimizeButton"
+                                Content="ー"
+                                Width="24"
+                                Height="20"
+                                Padding="0"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                Foreground="#6B7280"
+                                FontFamily="$fontFamily"
+                                FontSize="$titleFontSize"/>
+                        <Button Name="CloseButton"
+                                Content="×"
+                                Width="24"
+                                Height="20"
+                                Padding="0"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                Foreground="#6B7280"
+                                FontFamily="$fontFamily"
+                                FontSize="$titleFontSize"/>
+                    </StackPanel>
+                </Grid>
                 <TextBlock Name="FilterText"
                            Grid.Row="1"
                            FontFamily="$fontFamily"
@@ -219,50 +224,14 @@ function Show-HudWindow {
                             </Grid.RowDefinitions>
                             <TextBlock Name="ShortcutLabel"
                                        Grid.Row="0"
-                                       Text="Shortcut:"
+                                       Text="Snippets:"
                                        FontFamily="$fontFamily"
                                        FontSize="$filterFontSize"
                                        Foreground="#6B7280"
                                        Margin="0,0,0,4"/>
-                            <Border Name="ShortcutBox"
-                                    Grid.Row="1"
-                                    Background="#E5E7EB"
-                                    CornerRadius="4"
-                                    Padding="10,5"
-                                    Margin="0,0,0,16"
-                                    HorizontalAlignment="Left">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox Name="ShortcutText"
-                                             Grid.Column="0"
-                                             FontFamily="$fontFamily"
-                                             FontSize="$titleFontSize"
-                                             FontWeight="SemiBold"
-                                             Foreground="#111827"
-                                             Background="Transparent"
-                                             BorderThickness="0"
-                                             Padding="0,1"
-                                             HorizontalAlignment="Stretch"
-                                             IsReadOnly="True"
-                                             IsReadOnlyCaretVisible="False"/>
-                                    <Button Name="CopyShortcutButton"
-                                            Grid.Column="1"
-                                            Content="Copy"
-                                            Width="40"
-                                            Height="20"
-                                            Margin="0,0,0,0"
-                                            Padding="6,0"
-                                            BorderThickness="0"
-                                            Background="Transparent"
-                                            Foreground="#6B7280"
-                                            FontFamily="$fontFamily"
-                                            FontSize="$filterFontSize"
-                                            VerticalAlignment="Top"/>
-                                </Grid>
-                            </Border>
+                            <StackPanel Name="SnippetList"
+                                        Grid.Row="1"
+                                        Margin="0,0,0,16"/>
                             <TextBlock Grid.Row="2"
                                        Text="Description:"
                                        FontFamily="$fontFamily"
@@ -315,6 +284,7 @@ function Show-HudWindow {
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <TextBlock Name="RecentPathText"
                            Grid.Row="0"
@@ -346,14 +316,17 @@ function Show-HudWindow {
                         FontSize="$titleFontSize"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Top"/>
-                <TextBlock Name="RecentFeatureTitleText"
-                           Grid.Row="1"
-                           FontFamily="$fontFamily"
-                           FontSize="$featureTitleFontSize"
-                           FontWeight="SemiBold"
-                           Foreground="#111827"
-                           TextWrapping="Wrap"
-                           Margin="0,4,0,8"/>
+                <Border Name="RecentFeatureTitleDragArea"
+                        Grid.Row="1"
+                        Background="Transparent"
+                        Margin="0,4,0,8">
+                    <TextBlock Name="RecentFeatureTitleText"
+                               FontFamily="$fontFamily"
+                               FontSize="$featureTitleFontSize"
+                               FontWeight="SemiBold"
+                               Foreground="#111827"
+                               TextWrapping="Wrap"/>
+                </Border>
                 <Grid Grid.Row="2"
                       Name="RecentShortcutArea">
                     <Grid.RowDefinitions>
@@ -361,48 +334,14 @@ function Show-HudWindow {
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0"
-                               Text="Shortcut:"
+                               Text="Snippets:"
                                FontFamily="$fontFamily"
                                FontSize="$filterFontSize"
                                Foreground="#6B7280"
                                Margin="0,0,0,4"/>
-                    <Border Grid.Row="1"
-                            Background="#E5E7EB"
-                            CornerRadius="4"
-                            Padding="10,5"
-                            Margin="0,0,0,12"
-                            HorizontalAlignment="Left">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox Name="RecentShortcutText"
-                                     Grid.Column="0"
-                                     FontFamily="$fontFamily"
-                                     FontSize="$titleFontSize"
-                                     FontWeight="SemiBold"
-                                     Foreground="#111827"
-                                     Background="Transparent"
-                                     BorderThickness="0"
-                                     Padding="0,1"
-                                     HorizontalAlignment="Stretch"
-                                     IsReadOnly="True"
-                                     IsReadOnlyCaretVisible="False"/>
-                            <Button Name="RecentCopyShortcutButton"
-                                    Grid.Column="1"
-                                    Content="Copy"
-                                    Width="40"
-                                    Height="20"
-                                    Padding="6,0"
-                                    BorderThickness="0"
-                                    Background="Transparent"
-                                    Foreground="#6B7280"
-                                    FontFamily="$fontFamily"
-                                    FontSize="$filterFontSize"
-                                    VerticalAlignment="Top"/>
-                        </Grid>
-                    </Border>
+                    <StackPanel Name="RecentSnippetList"
+                                Grid.Row="1"
+                                Margin="0,0,0,12"/>
                 </Grid>
                 <Grid Grid.Row="3">
                     <Grid.RowDefinitions>
@@ -430,6 +369,39 @@ function Show-HudWindow {
                              VerticalScrollBarVisibility="Auto"
                              HorizontalScrollBarVisibility="Disabled"/>
                 </Grid>
+                <StackPanel Grid.Row="4"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Margin="0,6,0,2">
+                    <Button Name="RecentPrevButton"
+                            Content="＜"
+                            Width="24"
+                            Height="20"
+                            Padding="0"
+                            BorderThickness="0"
+                            Background="Transparent"
+                            Foreground="#6B7280"
+                            FontFamily="$fontFamily"
+                            FontSize="$filterFontSize"/>
+                    <TextBlock Name="RecentHistoryText"
+                               Text="0/0"
+                               Width="42"
+                               TextAlignment="Center"
+                               FontFamily="$fontFamily"
+                               FontSize="$filterFontSize"
+                               Foreground="#6B7280"
+                               VerticalAlignment="Center"/>
+                    <Button Name="RecentNextButton"
+                            Content="＞"
+                            Width="24"
+                            Height="20"
+                            Padding="0"
+                            BorderThickness="0"
+                            Background="Transparent"
+                            Foreground="#6B7280"
+                            FontFamily="$fontFamily"
+                            FontSize="$filterFontSize"/>
+                </StackPanel>
             </Grid>
         </Border>
     </Grid>
@@ -444,6 +416,7 @@ function Show-HudWindow {
     $root = $window.FindName('Root')
     $script:HudRoot = $root
     $panel = $window.FindName('Panel')
+    $mainHeaderDragArea = $window.FindName('MainHeaderDragArea')
     $titleMarker = $window.FindName('TitleMarkerText')
     $title = $window.FindName('TitleText')
     $mainDragHandle = $window.FindName('MainDragHandle')
@@ -459,19 +432,20 @@ function Show-HudWindow {
     $detail = $window.FindName('DetailText')
     $detailPanel = $window.FindName('DetailPanel')
     $shortcutLabel = $window.FindName('ShortcutLabel')
-    $shortcutBox = $window.FindName('ShortcutBox')
-    $shortcutText = $window.FindName('ShortcutText')
-    $copyShortcutButton = $window.FindName('CopyShortcutButton')
+    $snippetList = $window.FindName('SnippetList')
     $descriptionText = $window.FindName('DescriptionText')
     $recentPanel = $window.FindName('RecentPanel')
     $recentPathText = $window.FindName('RecentPathText')
     $recentDragHandle = $window.FindName('RecentDragHandle')
+    $recentFeatureTitleDragArea = $window.FindName('RecentFeatureTitleDragArea')
     $recentFeatureTitleText = $window.FindName('RecentFeatureTitleText')
     $recentShortcutArea = $window.FindName('RecentShortcutArea')
-    $recentShortcutText = $window.FindName('RecentShortcutText')
-    $recentCopyShortcutButton = $window.FindName('RecentCopyShortcutButton')
+    $recentSnippetList = $window.FindName('RecentSnippetList')
     $recentDescriptionText = $window.FindName('RecentDescriptionText')
     $recentCloseButton = $window.FindName('RecentCloseButton')
+    $recentPrevButton = $window.FindName('RecentPrevButton')
+    $recentHistoryText = $window.FindName('RecentHistoryText')
+    $recentNextButton = $window.FindName('RecentNextButton')
 
     function Set-HudProperty {
         param(
@@ -509,6 +483,156 @@ function Show-HudWindow {
         }
         else {
             $Target | Add-Member -NotePropertyName $Name -NotePropertyValue $Value -Force
+        }
+    }
+
+    function global:Get-HudFeatureSnippets {
+        param([AllowNull()][object]$Feature)
+
+        if ($null -eq $Feature) {
+            return @()
+        }
+
+        $snippets = @()
+        $featureCopyable = ($Feature.PSObject.Properties.Name -contains 'copyable' -and [bool]$Feature.copyable)
+        if ($Feature.PSObject.Properties.Name -contains 'snippets' -and $null -ne $Feature.snippets) {
+            foreach ($snippet in @($Feature.snippets)) {
+                $text = if ($snippet -is [string]) { [string]$snippet } else { [string]$snippet.text }
+                if ([string]::IsNullOrWhiteSpace($text)) { continue }
+                $snippets += [pscustomobject]@{
+                    text = $text
+                    copyable = $featureCopyable
+                }
+            }
+            return $snippets
+        }
+
+        if ($Feature.PSObject.Properties.Name -contains 'shortcut' -and -not [string]::IsNullOrWhiteSpace([string]$Feature.shortcut)) {
+            return @([pscustomobject]@{
+                text = [string]$Feature.shortcut
+                copyable = $featureCopyable
+            })
+        }
+
+        return @()
+    }
+
+    function Set-HudFeatureSnippetsFromText {
+        param(
+            [Parameter(Mandatory = $true)][object]$Feature,
+            [AllowNull()][string]$Text,
+            [bool]$Copyable
+        )
+
+        if ($Feature.PSObject.Properties.Name -contains 'shortcut') { $Feature.PSObject.Properties.Remove('shortcut') }
+
+        if ([string]::IsNullOrWhiteSpace($Text)) {
+            if ($Feature.PSObject.Properties.Name -contains 'snippets') { $Feature.PSObject.Properties.Remove('snippets') }
+            if ($Feature.PSObject.Properties.Name -contains 'copyable') { $Feature.PSObject.Properties.Remove('copyable') }
+            return
+        }
+
+        $parts = [regex]::Split($Text.Trim(), "(?m)^\s*---\s*$")
+        $snippets = @()
+        foreach ($part in $parts) {
+            $snippetText = $part.Trim()
+            if ([string]::IsNullOrWhiteSpace($snippetText)) { continue }
+            $snippets += $snippetText
+        }
+
+        if ($snippets.Count -gt 0) {
+            Set-HudProperty -Target $Feature -Name 'snippets' -Value @($snippets)
+            if ($Copyable) {
+                Set-HudProperty -Target $Feature -Name 'copyable' -Value $true
+            }
+            elseif ($Feature.PSObject.Properties.Name -contains 'copyable') {
+                $Feature.PSObject.Properties.Remove('copyable')
+            }
+        }
+        elseif ($Feature.PSObject.Properties.Name -contains 'snippets') {
+            $Feature.PSObject.Properties.Remove('snippets')
+        }
+    }
+
+    function global:Add-HudSnippetRows {
+        param(
+            [Parameter(Mandatory = $true)][System.Windows.Controls.Panel]$Target,
+            [Parameter(Mandatory = $true)][object[]]$Snippets
+        )
+
+        $Target.Children.Clear()
+        $snippetIndex = 0
+        foreach ($snippet in $Snippets) {
+            $snippetBorder = [System.Windows.Controls.Border]::new()
+            $snippetBorder.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#E5E7EB')
+            $snippetBorder.CornerRadius = [System.Windows.CornerRadius]::new(4)
+            $snippetBorder.Padding = [System.Windows.Thickness]::new(10, 5, 10, 5)
+            $bottomMargin = if ($snippetIndex -lt ($Snippets.Count - 1)) { 8 } else { 0 }
+            $snippetBorder.Margin = [System.Windows.Thickness]::new(0, 0, 0, $bottomMargin)
+            $snippetBorder.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Left
+
+            $snippetGrid = [System.Windows.Controls.Grid]::new()
+            $snippetGrid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
+            $snippetGrid.ColumnDefinitions[0].Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
+            $snippetGrid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
+            $snippetGrid.ColumnDefinitions[1].Width = [System.Windows.GridLength]::Auto
+
+            $snippetTextBox = [System.Windows.Controls.TextBox]::new()
+            $snippetTextBox.Text = [string]$snippet.text
+            $snippetTextBox.FontFamily = $script:HudFavoriteFontFamily
+            $snippetTextBox.FontSize = $script:HudFavoriteTitleFontSize
+            $snippetTextBox.FontWeight = [System.Windows.FontWeights]::SemiBold
+            $snippetTextBox.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#111827')
+            $snippetTextBox.Background = [System.Windows.Media.Brushes]::Transparent
+            $snippetTextBox.BorderThickness = [System.Windows.Thickness]::new(0)
+            $snippetTextBox.Padding = [System.Windows.Thickness]::new(0, 1, 0, 1)
+            $snippetTextBox.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Stretch
+            $snippetTextBox.IsReadOnly = $true
+            $snippetTextBox.IsReadOnlyCaretVisible = $false
+            $snippetTextBox.AcceptsReturn = $true
+            $snippetTextBox.TextWrapping = [System.Windows.TextWrapping]::Wrap
+            [System.Windows.Controls.Grid]::SetColumn($snippetTextBox, 0)
+            [void]$snippetGrid.Children.Add($snippetTextBox)
+
+            $snippetCopyButton = [System.Windows.Controls.Button]::new()
+            $snippetCopyButton.Content = 'Copy'
+            $snippetCopyButton.Width = 40
+            $snippetCopyButton.Height = 20
+            $snippetCopyButton.Padding = [System.Windows.Thickness]::new(6, 0, 6, 0)
+            $snippetCopyButton.BorderThickness = [System.Windows.Thickness]::new(0)
+            $snippetCopyButton.Background = [System.Windows.Media.Brushes]::Transparent
+            $snippetCopyButton.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#6B7280')
+            $snippetCopyButton.FontFamily = $script:HudFavoriteFontFamily
+            $snippetCopyButton.FontSize = $script:HudFavoriteFilterFontSize
+            $snippetCopyButton.VerticalAlignment = [System.Windows.VerticalAlignment]::Top
+            if (-not [bool]$snippet.copyable) {
+                $snippetCopyButton.Visibility = [System.Windows.Visibility]::Collapsed
+            }
+            $snippetCopyButton.Add_Click({
+                param($sender, $event)
+                try {
+                    [System.Windows.Clipboard]::SetText($snippetTextBox.Text)
+                    $sender.Content = 'OK'
+                }
+                catch {
+                    $sender.Content = 'Failed'
+                }
+                $resetTimer = [System.Windows.Threading.DispatcherTimer]::new()
+                $resetTimer.Interval = [TimeSpan]::FromMilliseconds(900)
+                $resetTimer.Add_Tick({
+                    param($timerSender, $timerEvent)
+                    $timerSender.Stop()
+                    $sender.Content = 'Copy'
+                }.GetNewClosure())
+                $resetTimer.Start()
+                $event.Handled = $true
+            }.GetNewClosure())
+            [System.Windows.Controls.Grid]::SetColumn($snippetCopyButton, 1)
+            [void]$snippetGrid.Children.Add($snippetCopyButton)
+
+            $snippetBorder.Child = $snippetGrid
+            [void]$Target.Children.Add($snippetBorder)
+            $snippetIndex++
         }
     }
 
@@ -609,10 +733,9 @@ function Show-HudWindow {
         if ($null -eq $editorCategoryLabel) { return }
         $editorCategoryDirtyMark.Visibility = [System.Windows.Visibility]::Collapsed
         $editorGroupDirtyMark.Visibility = [System.Windows.Visibility]::Collapsed
-        Set-EditorLabelText -Label $editorTitleLabel -Text 'Title' -Dirty $false
-        Set-EditorLabelText -Label $editorBitLabel -Text 'Bit' -Dirty $false
-        Set-EditorLabelText -Label $editorShortcutLabel -Text 'Shortcut / Command / Template' -Dirty $false
-        Set-EditorLabelText -Label $editorDescriptionLabel -Text 'Description' -Dirty $false
+        Set-EditorLabelText -Label $editorTitleLabel -Text 'Title:' -Dirty $false
+        Set-EditorLabelText -Label $editorShortcutLabel -Text 'Snippets:' -Dirty $false
+        Set-EditorLabelText -Label $editorDescriptionLabel -Text 'Description:' -Dirty $false
     }
 
     function Set-EditorDirtyMark {
@@ -654,7 +777,6 @@ function Show-HudWindow {
         $script:HudEditorRefreshing = $true
         if ($null -eq $feature) {
             $editorTitleBox.Text = ''
-            $editorBitTagBox.Text = ''
             $editorShortcutBox.Text = ''
             $editorCopyableBox.IsChecked = $false
             $editorFavoriteBox.IsChecked = $false
@@ -665,8 +787,8 @@ function Show-HudWindow {
         }
 
         $editorTitleBox.Text = [string]$feature.title
-        $editorBitTagBox.Text = [string]$feature.bitTag
-        $editorShortcutBox.Text = if ($feature.PSObject.Properties.Name -contains 'shortcut') { [string]$feature.shortcut } else { '' }
+        $snippets = @(Get-HudFeatureSnippets -Feature $feature)
+        $editorShortcutBox.Text = (($snippets | ForEach-Object { [string]$_.text }) -join "`r`n---`r`n")
         $editorCopyableBox.IsChecked = ($feature.PSObject.Properties.Name -contains 'copyable' -and [bool]$feature.copyable)
         $editorFavoriteBox.IsChecked = ($feature.PSObject.Properties.Name -contains 'favorite' -and [bool]$feature.favorite)
         $editorDescriptionBox.Text = [string]$feature.description
@@ -750,30 +872,18 @@ function Show-HudWindow {
         $editorGroupList.Items.Refresh()
         Set-EditorDirty $true
         Set-EditorDirtyMark -Mark $editorGroupDirtyMark -Dirty $false
+        Refresh-HudView
     }
 
     function Apply-EditorFeatureFields {
-        param([string[]]$DirtyFields = @('Title', 'Bit', 'Shortcut', 'Description'))
+        param([string[]]$DirtyFields = @('Title', 'Shortcut', 'Description'))
 
         $feature = Get-EditorSelectedFeature
         if ($null -eq $feature) { return }
         Set-HudProperty -Target $feature -Name 'title' -Value $editorTitleBox.Text
-        Set-HudProperty -Target $feature -Name 'bitTag' -Value $editorBitTagBox.Text
         Set-HudProperty -Target $feature -Name 'description' -Value $editorDescriptionBox.Text
 
-        if ([string]::IsNullOrWhiteSpace($editorShortcutBox.Text)) {
-            if ($feature.PSObject.Properties.Name -contains 'shortcut') { $feature.PSObject.Properties.Remove('shortcut') }
-        }
-        else {
-            Set-HudProperty -Target $feature -Name 'shortcut' -Value $editorShortcutBox.Text
-        }
-
-        if ([bool]$editorCopyableBox.IsChecked) {
-            Set-HudProperty -Target $feature -Name 'copyable' -Value $true
-        }
-        elseif ($feature.PSObject.Properties.Name -contains 'copyable') {
-            $feature.PSObject.Properties.Remove('copyable')
-        }
+        Set-HudFeatureSnippetsFromText -Feature $feature -Text $editorShortcutBox.Text -Copyable ([bool]$editorCopyableBox.IsChecked)
         if ([bool]$editorFavoriteBox.IsChecked) {
             Set-HudProperty -Target $feature -Name 'favorite' -Value $true
         }
@@ -781,16 +891,13 @@ function Show-HudWindow {
             $feature.PSObject.Properties.Remove('favorite')
         }
         if ($DirtyFields -contains 'Title') {
-            Set-EditorLabelText -Label $editorTitleLabel -Text 'Title' -Dirty $false
-        }
-        if ($DirtyFields -contains 'Bit') {
-            Set-EditorLabelText -Label $editorBitLabel -Text 'Bit' -Dirty $false
+            Set-EditorLabelText -Label $editorTitleLabel -Text 'Title:' -Dirty $false
         }
         if ($DirtyFields -contains 'Shortcut') {
-            Set-EditorLabelText -Label $editorShortcutLabel -Text 'Shortcut / Command / Template' -Dirty $false
+            Set-EditorLabelText -Label $editorShortcutLabel -Text 'Snippets:' -Dirty $false
         }
         if ($DirtyFields -contains 'Description') {
-            Set-EditorLabelText -Label $editorDescriptionLabel -Text 'Description' -Dirty $false
+            Set-EditorLabelText -Label $editorDescriptionLabel -Text 'Description:' -Dirty $false
         }
         if ($null -ne $editorFeatureList.SelectedItem) {
             $editorFeatureList.Items.Refresh()
@@ -815,22 +922,9 @@ function Show-HudWindow {
         }
 
         Set-HudProperty -Target $feature -Name 'title' -Value $editorTitleBox.Text
-        Set-HudProperty -Target $feature -Name 'bitTag' -Value $editorBitTagBox.Text
         Set-HudProperty -Target $feature -Name 'description' -Value $editorDescriptionBox.Text
 
-        if ([string]::IsNullOrWhiteSpace($editorShortcutBox.Text)) {
-            if ($feature.PSObject.Properties.Name -contains 'shortcut') { $feature.PSObject.Properties.Remove('shortcut') }
-        }
-        else {
-            Set-HudProperty -Target $feature -Name 'shortcut' -Value $editorShortcutBox.Text
-        }
-
-        if ([bool]$editorCopyableBox.IsChecked) {
-            Set-HudProperty -Target $feature -Name 'copyable' -Value $true
-        }
-        elseif ($feature.PSObject.Properties.Name -contains 'copyable') {
-            $feature.PSObject.Properties.Remove('copyable')
-        }
+        Set-HudFeatureSnippetsFromText -Feature $feature -Text $editorShortcutBox.Text -Copyable ([bool]$editorCopyableBox.IsChecked)
         if ([bool]$editorFavoriteBox.IsChecked) {
             Set-HudProperty -Target $feature -Name 'favorite' -Value $true
         }
@@ -945,27 +1039,23 @@ function Show-HudWindow {
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Text="編集" FontFamily="$fontFamily" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                    <TextBlock Name="EditorTitleLabel" Grid.Row="1" Text="Title" FontFamily="$fontFamily" Foreground="#6B7280"/>
+                    <TextBlock Name="EditorTitleLabel" Grid.Row="1" Text="Title:" FontFamily="$fontFamily" Foreground="#6B7280"/>
                     <TextBox Name="EditorTitleBox" Grid.Row="2" FontFamily="$fontFamily" Margin="0,2,0,8"/>
                     <Grid Grid.Row="3" Margin="0,0,0,8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="100"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Name="EditorBitLabel" Grid.Row="0" Grid.Column="0" Text="Bit" FontFamily="$fontFamily" Foreground="#6B7280"/>
-                        <TextBox Name="EditorBitTagBox" Grid.Row="1" Grid.Column="0" FontFamily="$fontFamily" Margin="0,2,8,0"/>
-                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,0">
                             <CheckBox Name="EditorCopyableBox" Content="copyable" FontFamily="$fontFamily" Margin="0,0,10,0"/>
                             <CheckBox Name="EditorFavoriteBox" Content="favorite" FontFamily="$fontFamily"/>
                         </StackPanel>
                     </Grid>
-                    <TextBlock Name="EditorShortcutLabel" Grid.Row="4" Text="Shortcut / Command / Template" FontFamily="$fontFamily" Foreground="#6B7280"/>
-                    <TextBox Name="EditorShortcutBox" Grid.Row="5" FontFamily="$fontFamily" Margin="0,2,0,8" AcceptsReturn="True" Height="88" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
-                    <TextBlock Name="EditorDescriptionLabel" Grid.Row="6" Text="Description" FontFamily="$fontFamily" Foreground="#6B7280"/>
+                    <StackPanel Grid.Row="4" Orientation="Horizontal">
+                        <TextBlock Name="EditorShortcutLabel" Text="Snippets:" FontFamily="$fontFamily" Foreground="#6B7280"/>
+                        <TextBlock Text="※「---」で別Snippetとして追加"
+                                   FontFamily="$fontFamily"
+                                   Foreground="#9CA3AF"
+                                   Margin="8,0,0,0"/>
+                    </StackPanel>
+                    <TextBox Name="EditorShortcutBox" Grid.Row="5" FontFamily="$fontFamily" Margin="0,2,0,8" AcceptsReturn="True" Height="88" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" ToolTip="複数に分ける場合は、区切り行として --- を入れる"/>
+                    <TextBlock Name="EditorDescriptionLabel" Grid.Row="6" Text="Description:" FontFamily="$fontFamily" Foreground="#6B7280"/>
                     <TextBox Name="EditorDescriptionBox" Grid.Row="7" FontFamily="$fontFamily" Margin="0,2,0,0" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
                     <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
                         <Button Name="EditorSaveButton" Content="Save JSON" Width="92" Margin="0,0,8,0"/>
@@ -1000,7 +1090,6 @@ function Show-HudWindow {
         Set-Variable -Name editorCategoryDirtyMark -Value $EditorWindow.FindName('EditorCategoryDirtyMark') -Scope Script
         Set-Variable -Name editorGroupDirtyMark -Value $EditorWindow.FindName('EditorGroupDirtyMark') -Scope Script
         Set-Variable -Name editorTitleLabel -Value $EditorWindow.FindName('EditorTitleLabel') -Scope Script
-        Set-Variable -Name editorBitLabel -Value $EditorWindow.FindName('EditorBitLabel') -Scope Script
         Set-Variable -Name editorShortcutLabel -Value $EditorWindow.FindName('EditorShortcutLabel') -Scope Script
         Set-Variable -Name editorDescriptionLabel -Value $EditorWindow.FindName('EditorDescriptionLabel') -Scope Script
         Set-Variable -Name editorCategoryNameBox -Value $EditorWindow.FindName('EditorCategoryNameBox') -Scope Script
@@ -1012,7 +1101,6 @@ function Show-HudWindow {
         Set-Variable -Name editorAddFeatureButton -Value $EditorWindow.FindName('EditorAddFeatureButton') -Scope Script
         Set-Variable -Name editorDeleteFeatureButton -Value $EditorWindow.FindName('EditorDeleteFeatureButton') -Scope Script
         Set-Variable -Name editorTitleBox -Value $EditorWindow.FindName('EditorTitleBox') -Scope Script
-        Set-Variable -Name editorBitTagBox -Value $EditorWindow.FindName('EditorBitTagBox') -Scope Script
         Set-Variable -Name editorShortcutBox -Value $EditorWindow.FindName('EditorShortcutBox') -Scope Script
         Set-Variable -Name editorCopyableBox -Value $EditorWindow.FindName('EditorCopyableBox') -Scope Script
         Set-Variable -Name editorFavoriteBox -Value $EditorWindow.FindName('EditorFavoriteBox') -Scope Script
@@ -1040,7 +1128,6 @@ function Show-HudWindow {
         $editorCategoryNameBox.Add_LostFocus({ Apply-EditorCategoryName })
         $editorGroupNameBox.Add_LostFocus({ Apply-EditorGroupName })
         $editorTitleBox.Add_LostFocus({ Apply-EditorFeatureFields -DirtyFields @('Title') })
-        $editorBitTagBox.Add_LostFocus({ Apply-EditorFeatureFields -DirtyFields @('Bit') })
         $editorShortcutBox.Add_LostFocus({ Apply-EditorFeatureFields -DirtyFields @('Shortcut') })
         $editorDescriptionBox.Add_LostFocus({ Apply-EditorFeatureFields -DirtyFields @('Description') })
         $editorCopyableBox.Add_Click({
@@ -1069,22 +1156,17 @@ function Show-HudWindow {
         })
         $editorTitleBox.Add_TextChanged({
             if (-not $script:HudEditorRefreshing) {
-                Set-EditorLabelText -Label $editorTitleLabel -Text 'Title' -Dirty $true
-            }
-        })
-        $editorBitTagBox.Add_TextChanged({
-            if (-not $script:HudEditorRefreshing) {
-                Set-EditorLabelText -Label $editorBitLabel -Text 'Bit' -Dirty $true
+                Set-EditorLabelText -Label $editorTitleLabel -Text 'Title:' -Dirty $true
             }
         })
         $editorShortcutBox.Add_TextChanged({
             if (-not $script:HudEditorRefreshing) {
-                Set-EditorLabelText -Label $editorShortcutLabel -Text 'Shortcut / Command / Template' -Dirty $true
+                Set-EditorLabelText -Label $editorShortcutLabel -Text 'Snippets:' -Dirty $true
             }
         })
         $editorDescriptionBox.Add_TextChanged({
             if (-not $script:HudEditorRefreshing) {
-                Set-EditorLabelText -Label $editorDescriptionLabel -Text 'Description' -Dirty $true
+                Set-EditorLabelText -Label $editorDescriptionLabel -Text 'Description:' -Dirty $true
             }
         })
         $editorCategoryNameBox.Add_KeyDown({
@@ -1108,7 +1190,6 @@ function Show-HudWindow {
                     name = 'NewGroup'
                     features = @([pscustomobject]@{
                         title = 'New feature（新しい機能）'
-                        bitTag = '1'
                         description = '説明を入力してください。'
                     })
                 })
@@ -1134,7 +1215,6 @@ function Show-HudWindow {
                 name = 'NewGroup'
                 features = @([pscustomobject]@{
                     title = 'New feature（新しい機能）'
-                    bitTag = '1'
                     description = '説明を入力してください。'
                 })
             }
@@ -1158,7 +1238,6 @@ function Show-HudWindow {
             if ($null -eq $group) { return }
             $newFeature = [pscustomobject]@{
                 title = 'New feature（新しい機能）'
-                bitTag = '1'
                 description = '説明を入力してください。'
             }
             Set-HudProperty -Target $group -Name 'features' -Value (@($group.features) + $newFeature)
@@ -1253,20 +1332,14 @@ function Show-HudWindow {
         $recentFeatureTitleText.Text = $Feature.title
         $recentDescriptionText.Text = $Feature.description
 
-        if ($Feature.PSObject.Properties.Name -contains 'shortcut' -and -not [string]::IsNullOrWhiteSpace($Feature.shortcut)) {
-            $recentShortcutText.Text = $Feature.shortcut
+        $snippets = @(Get-HudFeatureSnippets -Feature $Feature)
+        if ($snippets.Count -gt 0) {
+            Add-HudSnippetRows -Target $recentSnippetList -Snippets $snippets
             $recentShortcutArea.Visibility = [System.Windows.Visibility]::Visible
         }
         else {
-            $recentShortcutText.Text = ''
+            $recentSnippetList.Children.Clear()
             $recentShortcutArea.Visibility = [System.Windows.Visibility]::Collapsed
-        }
-
-        if (-not [string]::IsNullOrWhiteSpace($recentShortcutText.Text) -and $Feature.PSObject.Properties.Name -contains 'copyable' -and $Feature.copyable) {
-            $recentCopyShortcutButton.Visibility = [System.Windows.Visibility]::Visible
-        }
-        else {
-            $recentCopyShortcutButton.Visibility = [System.Windows.Visibility]::Collapsed
         }
 
         if (-not $script:HudIsRetreated) {
@@ -1274,16 +1347,52 @@ function Show-HudWindow {
         }
     }
 
+    function Update-RecentHistoryNav {
+        $count = @($script:HudRecentHistory).Count
+        if ($count -le 0) {
+            $recentHistoryText.Text = '0/0'
+            $recentPrevButton.IsEnabled = $false
+            $recentNextButton.IsEnabled = $false
+            return
+        }
+
+        $recentHistoryText.Text = "$($script:HudRecentHistoryIndex + 1)/$count"
+        $recentPrevButton.IsEnabled = ($count -gt 1)
+        $recentNextButton.IsEnabled = ($count -gt 1)
+    }
+
     function Show-EmptyRecentDetailWindow {
         $recentPathText.Text = '直近 /'
         $recentFeatureTitleText.Text = 'まだ詳細を開いていません'
-        $recentShortcutText.Text = ''
+        $recentSnippetList.Children.Clear()
         $recentShortcutArea.Visibility = [System.Windows.Visibility]::Collapsed
-        $recentCopyShortcutButton.Visibility = [System.Windows.Visibility]::Collapsed
         $recentDescriptionText.Text = '詳細画面を開くと、ここに直近の内容が残ります。'
+        Update-RecentHistoryNav
         if (-not $script:HudIsRetreated) {
             $recentPanel.Visibility = [System.Windows.Visibility]::Visible
         }
+    }
+
+    function Show-RecentHistoryEntry {
+        $count = @($script:HudRecentHistory).Count
+        if ($count -le 0) {
+            Show-EmptyRecentDetailWindow
+            return
+        }
+
+        if ($script:HudRecentHistoryIndex -lt 0) {
+            $script:HudRecentHistoryIndex = 0
+        }
+        elseif ($script:HudRecentHistoryIndex -ge $count) {
+            $script:HudRecentHistoryIndex = $count - 1
+        }
+
+        $entry = $script:HudRecentHistory[$script:HudRecentHistoryIndex]
+        $script:HudRecentFeature = $entry.Feature
+        $script:HudRecentCategoryName = $entry.CategoryName
+        $script:HudRecentGroupName = $entry.GroupName
+        Update-RecentDetailWindow -Feature $entry.Feature -CategoryName $entry.CategoryName -GroupName $entry.GroupName
+        Update-RecentHistoryNav
     }
 
     function Set-RecentDetail {
@@ -1292,18 +1401,46 @@ function Show-HudWindow {
             [object]$Feature
         )
 
-        $script:HudRecentFeature = $Feature
-        $script:HudRecentCategoryName = $State.SelectedCategory.name
-        $script:HudRecentGroupName = $State.SelectedGroup.name
+        $entry = [pscustomobject]@{
+            Feature = $Feature
+            CategoryName = $State.SelectedCategory.name
+            GroupName = $State.SelectedGroup.name
+        }
+
+        $current = if (@($script:HudRecentHistory).Count -gt 0) { $script:HudRecentHistory[0] } else { $null }
+        if ($null -eq $current -or $current.Feature -ne $Feature) {
+            $script:HudRecentHistory = @($entry) + @($script:HudRecentHistory | Where-Object { $_.Feature -ne $Feature })
+            if ($script:HudRecentHistory.Count -gt $script:HudRecentHistoryMax) {
+                $script:HudRecentHistory = @($script:HudRecentHistory | Select-Object -First $script:HudRecentHistoryMax)
+            }
+        }
+
+        $script:HudRecentHistoryIndex = 0
+        Show-RecentHistoryEntry
     }
 
     function Show-RecentDetailIfAvailable {
-        if ($null -eq $script:HudRecentFeature) {
+        if (@($script:HudRecentHistory).Count -le 0) {
             Show-EmptyRecentDetailWindow
             return
         }
 
-        Update-RecentDetailWindow -Feature $script:HudRecentFeature -CategoryName $script:HudRecentCategoryName -GroupName $script:HudRecentGroupName
+        Show-RecentHistoryEntry
+    }
+
+    function Move-RecentHistory {
+        param([Parameter(Mandatory = $true)][int]$Delta)
+
+        $count = @($script:HudRecentHistory).Count
+        if ($count -le 0) {
+            return
+        }
+
+        $script:HudRecentHistoryIndex = ($script:HudRecentHistoryIndex + $Delta) % $count
+        if ($script:HudRecentHistoryIndex -lt 0) {
+            $script:HudRecentHistoryIndex += $count
+        }
+        Show-RecentHistoryEntry
     }
 
     function Set-FavoriteButtonState {
@@ -1494,6 +1631,11 @@ function Show-HudWindow {
             [System.Windows.Controls.Grid]::SetColumn($unfavoriteButton, 2)
             [void]$grid.Children.Add($unfavoriteButton)
 
+            $titleDragArea = [System.Windows.Controls.Border]::new()
+            $titleDragArea.Background = [System.Windows.Media.Brushes]::Transparent
+            $titleDragArea.Margin = [System.Windows.Thickness]::new(0, 4, 0, 8)
+            $titleDragArea.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $border -Event $event }.GetNewClosure())
+
             $titleText = [System.Windows.Controls.TextBlock]::new()
             $titleText.Text = [string]$entry.Feature.title
             $titleText.FontFamily = $script:HudFavoriteFontFamily
@@ -1501,11 +1643,10 @@ function Show-HudWindow {
             $titleText.FontWeight = [System.Windows.FontWeights]::SemiBold
             $titleText.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#111827')
             $titleText.TextWrapping = [System.Windows.TextWrapping]::Wrap
-            $titleText.Margin = [System.Windows.Thickness]::new(0, 4, 0, 8)
-            $titleText.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $border -Event $event }.GetNewClosure())
-            [System.Windows.Controls.Grid]::SetRow($titleText, 1)
-            [System.Windows.Controls.Grid]::SetColumnSpan($titleText, 3)
-            [void]$grid.Children.Add($titleText)
+            $titleDragArea.Child = $titleText
+            [System.Windows.Controls.Grid]::SetRow($titleDragArea, 1)
+            [System.Windows.Controls.Grid]::SetColumnSpan($titleDragArea, 3)
+            [void]$grid.Children.Add($titleDragArea)
 
             $shortcutArea = [System.Windows.Controls.Grid]::new()
             $shortcutArea.RowDefinitions.Add([System.Windows.Controls.RowDefinition]::new())
@@ -1516,7 +1657,7 @@ function Show-HudWindow {
             [System.Windows.Controls.Grid]::SetColumnSpan($shortcutArea, 3)
 
             $shortcutLabel = [System.Windows.Controls.TextBlock]::new()
-            $shortcutLabel.Text = 'Shortcut:'
+            $shortcutLabel.Text = 'Snippets:'
             $shortcutLabel.FontFamily = $script:HudFavoriteFontFamily
             $shortcutLabel.FontSize = $script:HudFavoriteFilterFontSize
             $shortcutLabel.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#6B7280')
@@ -1524,62 +1665,16 @@ function Show-HudWindow {
             [System.Windows.Controls.Grid]::SetRow($shortcutLabel, 0)
             [void]$shortcutArea.Children.Add($shortcutLabel)
 
-            $shortcutBorder = [System.Windows.Controls.Border]::new()
-            $shortcutBorder.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#E5E7EB')
-            $shortcutBorder.CornerRadius = [System.Windows.CornerRadius]::new(4)
-            $shortcutBorder.Padding = [System.Windows.Thickness]::new(10, 5, 10, 5)
-            $shortcutBorder.Margin = [System.Windows.Thickness]::new(0, 0, 0, 12)
-            $shortcutBorder.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Left
-            [System.Windows.Controls.Grid]::SetRow($shortcutBorder, 1)
+            $favoriteSnippetList = [System.Windows.Controls.StackPanel]::new()
+            $favoriteSnippetList.Margin = [System.Windows.Thickness]::new(0, 0, 0, 16)
+            [System.Windows.Controls.Grid]::SetRow($favoriteSnippetList, 1)
+            [void]$shortcutArea.Children.Add($favoriteSnippetList)
 
-            $shortcutGrid = [System.Windows.Controls.Grid]::new()
-            $shortcutGrid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
-            $shortcutGrid.ColumnDefinitions[0].Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
-            $shortcutGrid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
-            $shortcutGrid.ColumnDefinitions[1].Width = [System.Windows.GridLength]::Auto
-
-            $shortcutTextBox = [System.Windows.Controls.TextBox]::new()
-            $shortcutTextBox.Text = [string]$entry.Feature.shortcut
-            $shortcutTextBox.FontFamily = $script:HudFavoriteFontFamily
-            $shortcutTextBox.FontSize = $script:HudFavoriteTitleFontSize
-            $shortcutTextBox.FontWeight = [System.Windows.FontWeights]::SemiBold
-            $shortcutTextBox.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#111827')
-            $shortcutTextBox.Background = [System.Windows.Media.Brushes]::Transparent
-            $shortcutTextBox.BorderThickness = [System.Windows.Thickness]::new(0)
-            $shortcutTextBox.Padding = [System.Windows.Thickness]::new(0, 1, 0, 1)
-            $shortcutTextBox.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Stretch
-            $shortcutTextBox.IsReadOnly = $true
-            $shortcutTextBox.IsReadOnlyCaretVisible = $false
-            [System.Windows.Controls.Grid]::SetColumn($shortcutTextBox, 0)
-            [void]$shortcutGrid.Children.Add($shortcutTextBox)
-
-            $copyButton = [System.Windows.Controls.Button]::new()
-            $copyButton.Content = 'Copy'
-            $copyButton.Width = 40
-            $copyButton.Height = 20
-            $copyButton.Padding = [System.Windows.Thickness]::new(6, 0, 6, 0)
-            $copyButton.BorderThickness = [System.Windows.Thickness]::new(0)
-            $copyButton.Background = [System.Windows.Media.Brushes]::Transparent
-            $copyButton.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#6B7280')
-            $copyButton.FontFamily = $script:HudFavoriteFontFamily
-            $copyButton.FontSize = $script:HudFavoriteFilterFontSize
-            $copyButton.VerticalAlignment = [System.Windows.VerticalAlignment]::Top
-            $copyButton.Add_Click({
-                param($sender, $event)
-                try {
-                    [System.Windows.Clipboard]::SetText($shortcutTextBox.Text)
-                    $sender.Content = 'OK'
-                }
-                catch {
-                    $sender.Content = 'Failed'
-                }
-            }.GetNewClosure())
-            [System.Windows.Controls.Grid]::SetColumn($copyButton, 1)
-            [void]$shortcutGrid.Children.Add($copyButton)
-
-            $shortcutBorder.Child = $shortcutGrid
-            [void]$shortcutArea.Children.Add($shortcutBorder)
-            if ([string]::IsNullOrWhiteSpace([string]$entry.Feature.shortcut)) {
+            $favoriteSnippets = @(Get-HudFeatureSnippets -Feature $entry.Feature)
+            if ($favoriteSnippets.Count -gt 0) {
+                Add-HudSnippetRows -Target $favoriteSnippetList -Snippets $favoriteSnippets
+            }
+            else {
                 $shortcutArea.Visibility = [System.Windows.Visibility]::Collapsed
             }
             [void]$grid.Children.Add($shortcutArea)
@@ -1684,24 +1779,17 @@ function Show-HudWindow {
             $detail.Visibility = [System.Windows.Visibility]::Collapsed
             $detailPanel.Visibility = [System.Windows.Visibility]::Visible
             $feature = $State.SelectedFeature
-            if ($feature.PSObject.Properties.Name -contains 'shortcut' -and -not [string]::IsNullOrWhiteSpace($feature.shortcut)) {
-                $shortcutText.Text = $feature.shortcut
+            $snippets = @(Get-HudFeatureSnippets -Feature $feature)
+            if ($snippets.Count -gt 0) {
+                Add-HudSnippetRows -Target $snippetList -Snippets $snippets
                 $shortcutLabel.Visibility = [System.Windows.Visibility]::Visible
-                $shortcutBox.Visibility = [System.Windows.Visibility]::Visible
             }
             else {
-                $shortcutText.Text = ''
+                $snippetList.Children.Clear()
                 $shortcutLabel.Visibility = [System.Windows.Visibility]::Collapsed
-                $shortcutBox.Visibility = [System.Windows.Visibility]::Collapsed
             }
             $descriptionText.Text = $feature.description
             Set-RecentDetail -Feature $feature
-            if (-not [string]::IsNullOrWhiteSpace($shortcutText.Text) -and $feature.PSObject.Properties.Name -contains 'copyable' -and $feature.copyable) {
-                $copyShortcutButton.Visibility = [System.Windows.Visibility]::Visible
-            }
-            else {
-                $copyShortcutButton.Visibility = [System.Windows.Visibility]::Collapsed
-            }
         }
         else {
             $list.Visibility = [System.Windows.Visibility]::Visible
@@ -1734,6 +1822,7 @@ function Show-HudWindow {
 
     function Hide-HudSession {
         $script:HudIsRetreated = $true
+        [System.Windows.Input.Keyboard]::ClearFocus()
         Reset-HudSessionToRoot
         $window.Left = -32000
         $window.Top = -32000
@@ -1877,17 +1966,43 @@ function Show-HudWindow {
         }
 
         $source = $Event.OriginalSource
+        $dragBandTarget = $null
         while ($null -ne $source) {
             if ($source -is [System.Windows.Controls.Button] -or $source -is [System.Windows.Controls.TextBox]) {
                 return
             }
             if ($script:HudFavoritePanels -contains $source) {
-                return
+                $dragBandTarget = $source
+                break
             }
-            if ($source -is [System.Windows.FrameworkElement] -and $source.Name -in @('TitleMarkerText', 'TitleText', 'MainDragHandle', 'RecentPathText', 'RecentFeatureTitleText', 'RecentDragHandle')) {
+            if ($source -eq $recentPanel) {
+                $dragBandTarget = $recentPanel
+                break
+            }
+            if ($source -is [System.Windows.FrameworkElement] -and $source.Name -in @('MainHeaderDragArea', 'TitleMarkerText', 'TitleText', 'MainDragHandle', 'RecentPathText', 'RecentFeatureTitleDragArea', 'RecentFeatureTitleText', 'RecentDragHandle')) {
                 return
             }
             $source = [System.Windows.Media.VisualTreeHelper]::GetParent($source)
+        }
+
+        if ($null -eq $dragBandTarget) {
+            $dragBandTarget = $panel
+        }
+
+        $panelPoint = $Event.GetPosition($dragBandTarget)
+        if (
+            $Button -eq [System.Windows.Input.MouseButton]::Left -and
+            $panelPoint.X -ge 0 -and
+            $panelPoint.X -le $dragBandTarget.ActualWidth -and
+            $panelPoint.Y -ge 0 -and
+            $panelPoint.Y -le 36
+        ) {
+            Start-HudPanelDrag -Target $dragBandTarget -Event $Event
+            return
+        }
+
+        if ($dragBandTarget -ne $panel) {
+            return
         }
 
         if ($Button -eq [System.Windows.Input.MouseButton]::Left) {
@@ -2081,12 +2196,14 @@ function Show-HudWindow {
     $detail.Add_PreviewTextInput({ param($sender, $event) Handle-HudTextInput -Event $event })
     $window.Add_PreviewMouseLeftButtonDown({ param($sender, $event) Handle-HudMouseButton -Button $event.ChangedButton -Event $event })
     $window.Add_PreviewMouseRightButtonDown({ param($sender, $event) Handle-HudMouseButton -Button $event.ChangedButton -Event $event })
+    $mainHeaderDragArea.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $panel -Event $event }.GetNewClosure())
     $titleMarker.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $panel -Event $event }.GetNewClosure())
     $title.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $panel -Event $event }.GetNewClosure())
     $mainDragHandle.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $panel -Event $event }.GetNewClosure())
     $panel.Add_MouseMove({ param($sender, $event) Move-HudPanelDrag -Event $event }.GetNewClosure())
     $panel.Add_MouseLeftButtonUp({ param($sender, $event) Stop-HudPanelDrag -Event $event }.GetNewClosure())
     $recentPathText.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $recentPanel -Event $event }.GetNewClosure())
+    $recentFeatureTitleDragArea.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $recentPanel -Event $event }.GetNewClosure())
     $recentFeatureTitleText.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $recentPanel -Event $event }.GetNewClosure())
     $recentDragHandle.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $recentPanel -Event $event }.GetNewClosure())
     $recentPanel.Add_MouseMove({ param($sender, $event) Move-HudPanelDrag -Event $event }.GetNewClosure())
@@ -2096,57 +2213,8 @@ function Show-HudWindow {
     $favoriteButton.Add_Click({ Toggle-HudFavoriteFromDetail })
     $closeButton.Add_Click({ $window.Close() })
     $recentCloseButton.Add_Click({ $recentPanel.Visibility = [System.Windows.Visibility]::Collapsed })
-    $recentCopyShortcutButton.Add_Click({
-        if (-not [string]::IsNullOrEmpty($recentShortcutText.Text)) {
-            try {
-                [System.Windows.Clipboard]::SetText($recentShortcutText.Text)
-                $recentCopyShortcutButton.Content = 'OK'
-            }
-            catch {
-                $recentCopyShortcutButton.Content = 'Failed'
-            }
-            if ($null -ne $script:HudRecentCopyResetTimer) {
-                $script:HudRecentCopyResetTimer.Stop()
-            }
-            $script:HudRecentCopyResetTimer = [System.Windows.Threading.DispatcherTimer]::new()
-            $script:HudRecentCopyResetTimer.Interval = [TimeSpan]::FromMilliseconds(900)
-            $script:HudRecentCopyResetTimer.Add_Tick({
-                $script:HudRecentCopyResetTimer.Stop()
-                $recentCopyShortcutButton.Content = 'Copy'
-            })
-            $script:HudRecentCopyResetTimer.Start()
-        }
-    })
-    $copyShortcutButton.Add_Click({
-        if (-not [string]::IsNullOrEmpty($shortcutText.Text)) {
-            try {
-                [System.Windows.Clipboard]::SetText($shortcutText.Text)
-                $copyShortcutButton.Content = 'OK'
-            }
-            catch {
-                $copyShortcutButton.Content = 'Failed'
-            }
-            if ($null -ne $script:HudCopyResetTimer) {
-                $script:HudCopyResetTimer.Stop()
-            }
-            $script:HudCopyResetTimer = [System.Windows.Threading.DispatcherTimer]::new()
-            $script:HudCopyResetTimer.Interval = [TimeSpan]::FromMilliseconds(900)
-            $script:HudCopyResetTimer.Add_Tick({
-                $script:HudCopyResetTimer.Stop()
-                $copyShortcutButton.Content = 'Copy'
-            })
-            $script:HudCopyResetTimer.Start()
-        }
-    })
-    $shortcutText.Add_PreviewMouseLeftButtonDown({
-        param($sender, $event)
-
-        if ($event.ClickCount -ge 3) {
-            $shortcutText.Focus() | Out-Null
-            $shortcutText.SelectAll()
-            $event.Handled = $true
-        }
-    })
+    $recentPrevButton.Add_Click({ Move-RecentHistory -Delta 1 })
+    $recentNextButton.Add_Click({ Move-RecentHistory -Delta -1 })
     $list.Add_MouseDoubleClick({ Select-CurrentCandidate })
     $window.Add_Activated({ Show-HudSession })
     $window.Add_Loaded({
