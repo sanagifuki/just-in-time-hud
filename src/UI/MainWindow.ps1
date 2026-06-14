@@ -367,7 +367,7 @@ function Show-HudWindow {
                 <StackPanel Grid.Row="2"
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
-                            Margin="0,6,0,2">
+                            Margin="0,6,0,1">
                     <Button Name="RecentPrevButton"
                             Content="＜"
                             Width="24"

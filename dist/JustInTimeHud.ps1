@@ -1,29 +1,63 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: 0c3f93d
+# Source commit: d0717e0
 
 $script:EmbeddedHudDataJson = @'
-[
-  {
-    "name": "Prompt",
-    "groups": [
-      {
-        "name": "Organize",
-        "features": [
-          {
-            "title": "Organize（情報整理）",
-            "snippets": [
-              "以下のユーザ記載情報を、次の出力形式・ルールを元に、認知負荷が少ない情報として整理してください。\n\n## 作業情報(ユーザ記載)\n\n<内容>\n\n## 出力形式\n\n- 親分類: 作業領域や用途の大きなまとまり。\n- 中分類: 親分類の中で、具体的な作業種類や場面を分ける分類。\n- 機能名: 後から探すときの項目名。「English title（日本語説明）」形式にする。\n- 主要情報(Snippets): 実際にコピーして使うコマンド、定型文、手順、参照情報。複数ある場合は分けて書く。\n- 説明(Description): 主要情報の具体的な説明(何のために使うかなど)や補足情報などを説明する。\n\n## 出力例\n\n```\n- 親分類: `Terminal`\n- 中分類: `Git`\n- 機能名: `Status（変更状況を確認）`\n- 主要情報(Snippets):\n    ```\n    git status --short\n    ---\n    git diff --stat\n    ```\n- 説明(Description): \n    ```\n    コミット前に、作業ツリーの変更状況と差分の概要を確認するために使う。\n    ```\n```\n\n## ルール\n\n- 内容から用途を推測し、後から探しやすい分類名にする。\n- 親分類と中分類は、広すぎず細かすぎない粒度にする。\n- 機能名は「English title（日本語説明）」形式にする。\n- English title は、分類名ではなく、キー入力で探しやすい、機能を表す短い単語から始める。\n- English title は、親分類名や中分類名と同じ語で始めない。(例: `Git Status`ではなく`Status`)\n- 主要情報(Snippets)には、実際に再利用する本文だけを書く。\n- 主要情報(Snippets)が複数ある場合は、「---」だけの行で区切る。\n- 説明(Description)には、主要情報の目的、使う場面、注意点を簡潔に書く。\n- 不明な点がある場合は、足りない情報だけを質問する。"
-            ],
-            "description": "雑に書いた内容を、分類・機能名・主要情報・説明へ整理するためのプロンプト。",
-            "copyable": true,
-            "favorite": true
-          }
-        ]
-      }
-    ]
-  }
-]
+{
+  "name": "JustInTimeHUD",
+  "groups": [
+    {
+      "name": "Prompt",
+      "features": [
+        {
+          "title": "Format memo prompt（メモ整理プロンプト）",
+          "snippets": [
+            "以下のユーザ記載情報を、次の出力形式・ルールを元に、認知負荷が少ない情報として整理してください。\n\n## 作業情報(ユーザ記載)\n\n<内容>\n\n## 出力形式\n\n- 親分類: 作業領域や用途の大きなまとまり。\n- 中分類: 親分類の中で、具体的な作業種類や場面を分ける分類。\n- 機能名: 後から探すときの項目名。「English title（日本語説明）」形式にする。\n- 主要情報(Snippets): 実際にコピーして使うコマンド、定型文、手順、参照情報。複数ある場合は分けて書く。\n- 説明(Description): 主要情報の具体的な説明(何のために使うかなど)や補足情報などを説明する。\n\n## 出力例\n\n```\n- 親分類: `Terminal`\n- 中分類: `Git`\n- 機能名: `Status（変更状況の確認コマンド）`\n- 主要情報(Snippets):\n    ```\n    git status --short\n    ---\n    git diff --stat\n    ```\n- 説明(Description): \n    ```\n    コミット前に、作業ツリーの変更状況と差分の概要を確認するために使う。\n    ```\n```\n\n## ルール\n\n- 内容から用途を推測し、後から探しやすい分類名にする。\n- 親分類と中分類は、広すぎず細かすぎない粒度にする。\n- 機能名は「English title（日本語説明）」形式にする。\n- English title は、分類名ではなく、キー入力で探しやすい、機能を表す短い単語から始める。\n- English title は、親分類名や中分類名と同じ語で始めない。(例: `Git Status`ではなく`Status`)\n- 主要情報(Snippets)には、実際に再利用する本文だけを書く。\n- 主要情報(Snippets)が複数ある場合は、「---」だけの行で区切る。\n- 説明(Description)には、主要情報の目的、使う場面、注意点を簡潔に書く。\n- 不明な点がある場合は、足りない情報だけを質問する。"
+          ],
+          "description": "雑に書いた内容を、分類・機能名・主要情報・説明へ整理するためのプロンプト。",
+          "copyable": true,
+          "favorite": true
+        }
+      ]
+    },
+    {
+      "name": "Instructions",
+      "features": [
+        {
+          "title": "Overview（概要）",
+          "description": "Just-In-Time HUDは、よく使うコマンド、定型文、手順、参照情報を、必要な瞬間に短い操作で呼び出すためのHUDです。\n\n情報は「親分類 / 中分類 / 機能」の3階層で整理します。親分類はサービス名や作業領域くらいの大きなまとまり、中分類はその中の用途、機能は実際に呼び出す項目です。\n\n機能名は「English title（日本語説明）」形式にすると、キー入力で探しやすくなります。English titleは分類名ではなく、機能を表す短い単語から始めると使いやすいです。"
+        },
+        {
+          "title": "Navigate（基本操作）",
+          "snippets": [
+            "キー入力: 候補を絞り込み",
+            "左クリック: 上へ移動\n右クリック: 下へ移動",
+            "Tab: 選択中に遷移\n1/2/3: 上から選択",
+            "Esc: 入力リセット / 前の画面へ戻る\nSpace: HUDを退避"
+          ],
+            "description": "親分類・中分類・機能リストで使う基本操作です。\n\nキー入力で候補を絞り込み、候補が1件になると自動で次へ進みます。`左クリック/右クリック`は選択位置の移動、`Tab`と`1/2/3`は選択中項目への遷移に使います。\n\n`Esc`は入力リセットや前の画面へ戻る操作です。`Space`はHUDを退避します。"
+        },
+        {
+          "title": "Edit items（項目編集）",
+            "description": "右上のEditから項目編集画面を開けます。各機能を追加・削除できます。\n\n- Title: 後から探すときの機能名です。「English title（日本語説明）」形式にすると、キー入力で探しやすくなります。\n- Snippets: 実際にコピーして使うコマンド、定型文、手順、参照情報です。「---」だけの行で区切ると、複数Snippetとして登録されます。\n- Description: Snippetsの目的、使う場面、注意点などの補足説明です。メモとして活用できます。\n- copyable: 有効にすると、各Snippetに`Copy`ボタンが表示されます。favoriteを有効にすると、お気に入りウィンドウとして常に表示されるようになります。"
+        },
+        {
+          "title": "Read detail（詳細画面）",
+          "snippets": [
+            "Copy: 対象Snippetをクリップボードへコピー",
+            "Ctrl+C: 選択中のテキストをコピー"
+          ],
+            "description": "詳細画面では、機能名、Snippets、Descriptionを確認できます。\n\nSnippetsは、コピーして使うコマンド、定型文、手順、参照情報です。`Copy`ボタンが表示されている場合は、押すとそのSnippetをクリップボードへコピーします。`Ctrl+C`で選択中のテキストをコピーすることもできます。\n\n長いSnippetsやDescriptionはスクロールして確認できます。Snippetごとの最大表示高さは`settings.jsonc`の`snippetMaxHeight`で調整できます。"
+        },
+        {
+          "title": "Settings（設定）",
+            "description": "`settings.jsonc`で、HUDの座標、サイズ、フォント、背景色、Snippet最大表示高さを調整できます。\n\n各項目の説明は、`settings.jsonc`内にコメントで記載されています。\n\n配布用の単一ファイルを使う場合、`hud-items.json`と`settings.jsonc`が同じフォルダに無ければ初回起動時に自動生成されます。"
+        }
+      ]
+    }
+  ]
+}
+
 
 '@
 
@@ -810,7 +844,7 @@ function Show-HudWindow {
                 <StackPanel Grid.Row="2"
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
-                            Margin="0,6,0,2">
+                            Margin="0,6,0,1">
                     <Button Name="RecentPrevButton"
                             Content="＜"
                             Width="24"
