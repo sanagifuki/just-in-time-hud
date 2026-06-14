@@ -1,62 +1,116 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: e92c84b
+# Source commit: 1cdb4b1
 
 $script:EmbeddedHudDataJson = @'
 [
   {
-  "name": "JustInTimeHUD",
-  "groups": [
-    {
-      "name": "Prompt",
-      "features": [
-        {
-          "title": "Format memo prompt（メモ整理プロンプト）",
-          "snippets": [
-            "以下のユーザ記載情報を、次の出力形式・ルールを元に、認知負荷が少ない情報として整理してください。\n\n## 作業情報(ユーザ記載)\n\n<内容>\n\n## 出力形式\n\n- 親分類: 作業領域や用途の大きなまとまり。\n- 中分類: 親分類の中で、具体的な作業種類や場面を分ける分類。\n- 機能名: 後から探すときの項目名。「English title（日本語説明）」形式にする。\n- 主要情報(Snippets): 実際にコピーして使うコマンド、定型文、手順、参照情報。複数ある場合は分けて書く。\n- 説明(Description): 主要情報の具体的な説明(何のために使うかなど)や補足情報などを説明する。\n\n## 出力例\n\n```\n- 親分類: `Terminal`\n- 中分類: `Git`\n- 機能名: `Status（変更状況の確認コマンド）`\n- 主要情報(Snippets):\n    ```\n    git status --short\n    ---\n    git diff --stat\n    ```\n- 説明(Description): \n    ```\n    コミット前に、作業ツリーの変更状況と差分の概要を確認するために使う。\n    ```\n```\n\n## ルール\n\n- 内容から用途を推測し、後から探しやすい分類名にする。\n- 親分類と中分類は、広すぎず細かすぎない粒度にする。\n- 機能名は「English title（日本語説明）」形式にする。\n- English title は、分類名ではなく、キー入力で探しやすい、機能を表す短い単語から始める。\n- English title は、親分類名や中分類名と同じ語で始めない。(例: `Git Status`ではなく`Status`)\n- 主要情報(Snippets)には、実際に再利用する本文だけを書く。\n- 主要情報(Snippets)が複数ある場合は、「---」だけの行で区切る。\n- 説明(Description)には、主要情報の目的、使う場面、注意点を簡潔に書く。\n- 不明な点がある場合は、足りない情報だけを質問する。"
-          ],
-          "description": "雑に書いた内容を、分類・機能名・主要情報・説明へ整理するためのプロンプト。",
-          "copyable": true,
-          "favorite": true
-        }
-      ]
-    },
-    {
-      "name": "Instructions",
-      "features": [
-        {
-          "title": "Overview（概要）",
-          "description": "Just-In-Time HUDは、よく使うコマンド、定型文、手順、参照情報を、必要な瞬間に短い操作で呼び出すためのHUDです。\n\n情報は「親分類 / 中分類 / 機能」の3階層で整理します。親分類はサービス名や作業領域くらいの大きなまとまり、中分類はその中の用途、機能は実際に呼び出す項目です。\n\n機能名は「English title（日本語説明）」形式にすると、キー入力で探しやすくなります。English titleは分類名ではなく、機能を表す短い単語から始めると使いやすいです。"
-        },
-        {
-          "title": "Navigate（基本操作）",
-          "snippets": [
-            "キー入力: 候補を絞り込み",
-            "左クリック: 上へ移動\n右クリック: 下へ移動",
-            "Tab: 選択中に遷移\n1/2/3: 上から選択",
-            "Esc: 入力リセット / 前の画面へ戻る\nSpace: HUDを退避"
-          ],
-          "description": "親分類・中分類・機能リストで使う基本操作です。\n\nキー入力で候補を絞り込み、候補が1件になると自動で次へ進みます。`左クリック/右クリック`は選択位置の移動、`Tab`と`1/2/3`は選択中項目への遷移に使います。\n\n`Esc`は入力リセットや前の画面へ戻る操作です。`Space`はHUDを退避します。"
-        },
-        {
-          "title": "Edit items（項目編集）",
-          "description": "右上のEditから項目編集画面を開けます。各機能を追加・削除できます。\n\n- Title: 後から探すときの機能名です。「English title（日本語説明）」形式にすると、キー入力で探しやすくなります。\n- Snippets: 実際にコピーして使うコマンド、定型文、手順、参照情報です。「---」だけの行で区切ると、複数Snippetとして登録されます。\n- Description: Snippetsの目的、使う場面、注意点などの補足説明です。メモとして活用できます。\n- copyable: 有効にすると、各Snippetに`Copy`ボタンが表示されます。favoriteを有効にすると、お気に入りウィンドウとして常に表示されるようになります。"
-        },
-        {
-          "title": "Read detail（詳細画面）",
-          "snippets": [
-            "Copy: 対象Snippetをクリップボードへコピー",
-            "Ctrl+C: 選択中のテキストをコピー"
-          ],
-          "description": "詳細画面では、機能名、Snippets、Descriptionを確認できます。\n\nSnippetsは、コピーして使うコマンド、定型文、手順、参照情報です。`Copy`ボタンが表示されている場合は、押すとそのSnippetをクリップボードへコピーします。`Ctrl+C`で選択中のテキストをコピーすることもできます。\n\n長いSnippetsやDescriptionはスクロールして確認できます。Snippetごとの最大表示高さは`settings.jsonc`の`snippetMaxHeight`で調整できます。"
-        },
-        {
-          "title": "Settings（設定）",
-          "description": "`settings.jsonc`で、HUDの座標、サイズ、フォント、背景色、Snippet最大表示高さを調整できます。\n\n各項目の説明は、`settings.jsonc`内にコメントで記載されています。\n\n配布用の単一ファイルを使う場合、`hud-items.json`と`settings.jsonc`が同じフォルダに無ければ初回起動時に自動生成されます。"
-        }
-      ]
-    }
-  ]
+    "name": "JustInTimeHUD",
+    "groups": [
+      {
+        "name": "Prompt",
+        "features": [
+          {
+            "title": "Format memo prompt（メモ整理プロンプト）",
+            "snippets": [
+              "以下のユーザ記載情報を、次の出力形式・ルールを元に、認知負荷が少ない情報として整理してください。\n\n## 作業情報(ユーザ記載)\n\n<内容>\n\n## 出力形式\n\n- 親分類: 作業領域や用途の大きなまとまり。\n- 中分類: 親分類の中で、具体的な作業種類や場面を分ける分類。\n- 機能名: 後から探すときの項目名。「English title（日本語説明）」形式にする。\n- 主要情報(Snippets): 実際にコピーして使うコマンド、定型文、手順、参照情報。複数ある場合は分けて書く。\n- 説明(Description): 主要情報の具体的な説明(何のために使うかなど)や補足情報などを説明する。\n\n## 出力例\n\n```\n- 親分類: `Terminal`\n- 中分類: `Git`\n- 機能名: `Status（変更状況の確認コマンド）`\n- 主要情報(Snippets):\n    ```\n    git status --short\n    ---\n    git diff --stat\n    ```\n- 説明(Description): \n    ```\n    コミット前に、作業ツリーの変更状況と差分の概要を確認するために使う。\n    ```\n```\n\n## ルール\n\n- 内容から用途を推測し、後から探しやすい分類名にする。\n- 親分類と中分類は、広すぎず細かすぎない粒度にする。\n- 機能名は「English title（日本語説明）」形式にする。\n- English title は、分類名ではなく、キー入力で探しやすい、機能を表す短い単語から始める。\n- English title は、親分類名や中分類名と同じ語で始めない。(例: `Git Status`ではなく`Status`)\n- 主要情報(Snippets)には、実際に再利用する本文だけを書く。\n- 主要情報(Snippets)が複数ある場合は、「---」だけの行で区切る。\n- 説明(Description)には、主要情報の目的、使う場面、注意点を簡潔に書く。\n- 不明な点がある場合は、足りない情報だけを質問する。"
+            ],
+            "description": "雑に書いた内容を、分類・機能名・主要情報・説明へ整理するためのプロンプト。",
+            "copyable": true,
+            "favorite": true
+          }
+        ]
+      },
+      {
+        "name": "Instructions",
+        "features": [
+          {
+            "title": "Overview（概要）",
+            "description": "Just-In-Time HUDは、よく使うコマンド、定型文、手順、参照情報を、必要な瞬間に短い操作で呼び出すためのHUDです。\n\n情報は「親分類 / 中分類 / 機能」の3階層で整理します。親分類はサービス名や作業領域くらいの大きなまとまり、中分類はその中の用途、機能は実際に呼び出す項目です。\n\n機能名は「English title（日本語説明）」形式にすると、キー入力で探しやすくなります。English titleは分類名ではなく、機能を表す短い単語から始めると使いやすいです。"
+          },
+          {
+            "title": "Navigate（基本操作）",
+            "snippets": [
+              "キー入力: 候補を絞り込み",
+              "左クリック: 上へ移動\n右クリック: 下へ移動",
+              "Tab: 選択中に遷移\n1/2/3: 上から選択",
+              "Esc: 入力リセット / 前の画面へ戻る\nSpace: HUDを退避"
+            ],
+            "description": "親分類・中分類・機能リストで使う基本操作です。\n\nキー入力で候補を絞り込み、候補が1件になると自動で次へ進みます。`左クリック/右クリック`は選択位置の移動、`Tab`と`1/2/3`は選択中項目への遷移に使います。\n\n`Esc`は入力リセットや前の画面へ戻る操作です。`Space`はHUDを退避します。"
+          },
+          {
+            "title": "Edit items（項目編集）",
+            "description": "右上のEditから項目編集画面を開けます。各機能を追加・削除できます。\n\n- Title: 後から探すときの機能名です。「English title（日本語説明）」形式にすると、キー入力で探しやすくなります。\n- Snippets: 実際にコピーして使うコマンド、定型文、手順、参照情報です。「---」だけの行で区切ると、複数Snippetとして登録されます。\n- Description: Snippetsの目的、使う場面、注意点などの補足説明です。メモとして活用できます。\n- copyable: 有効にすると、各Snippetに`Copy`ボタンが表示されます。favoriteを有効にすると、お気に入りウィンドウとして常に表示されるようになります。"
+          },
+          {
+            "title": "Read detail（詳細画面）",
+            "snippets": [
+              "Copy: 対象Snippetをクリップボードへコピー",
+              "Ctrl+C: 選択中のテキストをコピー"
+            ],
+            "description": "詳細画面では、機能名、Snippets、Descriptionを確認できます。\n\nSnippetsは、コピーして使うコマンド、定型文、手順、参照情報です。`Copy`ボタンが表示されている場合は、押すとそのSnippetをクリップボードへコピーします。`Ctrl+C`で選択中のテキストをコピーすることもできます。\n\n長いSnippetsやDescriptionはスクロールして確認できます。Snippetごとの最大表示高さは`settings.jsonc`の`snippetMaxHeight`で調整できます。"
+          },
+          {
+            "title": "Settings（設定）",
+            "description": "`settings.jsonc`で、HUDの座標、サイズ、フォント、背景色、Snippet最大表示高さを調整できます。\n\n各項目の説明は、`settings.jsonc`内にコメントで記載されています。\n\n配布用の単一ファイルを使う場合、`hud-items.json`と`settings.jsonc`が同じフォルダに無ければ初回起動時に自動生成されます。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Git",
+    "groups": [
+      {
+        "name": "Working tree",
+        "features": [
+          {
+            "title": "Status（変更状況の確認コマンド）",
+            "snippets": [
+              "git status --short",
+              "git diff --stat",
+              "git diff"
+            ],
+            "description": "コミット前に、作業ツリーの変更状況や差分を確認するためのコマンド。",
+            "copyable": true
+          },
+          {
+            "title": "Restore（変更取り消しコマンド）",
+            "snippets": [
+              "git restore <file>",
+              "git restore --staged <file>",
+              "git clean -nd"
+            ],
+            "description": "作業ツリーやステージ済み変更を戻すときのコマンド。`git clean -nd`は削除対象の確認用。",
+            "copyable": true
+          }
+        ]
+      },
+      {
+        "name": "Commit",
+        "features": [
+          {
+            "title": "Stage（ステージングコマンド）",
+            "snippets": [
+              "git add <file>",
+              "git add .",
+              "git reset <file>"
+            ],
+            "description": "コミット対象をステージへ追加・解除するためのコマンド。",
+            "copyable": true
+          },
+          {
+            "title": "Commit（コミット作成コマンド）",
+            "snippets": [
+              "git commit -m \"<message>\"",
+              "git commit --amend"
+            ],
+            "description": "コミットを作成・修正するためのコマンド。",
+            "copyable": true
+          }
+        ]
+      }
+    ]
   }
 ]
 
@@ -1045,6 +1099,10 @@ function Show-HudWindow {
             $snippetBorder.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Left
 
             $snippetGrid = [System.Windows.Controls.Grid]::new()
+            $snippetGrid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
+            $snippetGrid.ColumnDefinitions[0].Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
+            $snippetGrid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
+            $snippetGrid.ColumnDefinitions[1].Width = [System.Windows.GridLength]::Auto
 
             $snippetTextBox = [System.Windows.Controls.TextBox]::new()
             $snippetTextBox.Text = [string]$snippet.text
@@ -1063,13 +1121,21 @@ function Show-HudWindow {
             $snippetTextBox.MaxHeight = $script:HudSnippetMaxHeight
             $snippetTextBox.VerticalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Hidden
             $snippetTextBox.HorizontalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Disabled
+            [System.Windows.Controls.Grid]::SetColumn($snippetTextBox, 0)
             [void]$snippetGrid.Children.Add($snippetTextBox)
 
+            $lineCount = (([string]$snippet.text) -split "(`r`n|`n|`r)").Count
+            $copyLabel = if ($lineCount -le 3) {
+                'cp'
+            }
+            else {
+                "c`no`np`ny"
+            }
             $snippetCopyButton = [System.Windows.Controls.Button]::new()
-            $snippetCopyButton.Content = 'Copy'
-            $snippetCopyButton.Width = 40
-            $snippetCopyButton.Height = 20
-            $snippetCopyButton.Padding = [System.Windows.Thickness]::new(6, 0, 6, 0)
+            $snippetCopyButton.Content = $copyLabel
+            $snippetCopyButton.Width = 22
+            $snippetCopyButton.MinHeight = 20
+            $snippetCopyButton.Padding = [System.Windows.Thickness]::new(0)
             $snippetCopyButton.BorderThickness = [System.Windows.Thickness]::new(0)
             $snippetCopyButtonBackground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#D1D5DB')
             $snippetCopyButtonBackground.Opacity = 0.85
@@ -1077,8 +1143,9 @@ function Show-HudWindow {
             $snippetCopyButton.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#374151')
             $snippetCopyButton.FontFamily = $script:HudFavoriteFontFamily
             $snippetCopyButton.FontSize = $script:HudFavoriteFilterFontSize
-            $snippetCopyButton.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Right
-            $snippetCopyButton.VerticalAlignment = [System.Windows.VerticalAlignment]::Top
+            $snippetCopyButton.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Stretch
+            $snippetCopyButton.VerticalAlignment = [System.Windows.VerticalAlignment]::Stretch
+            $snippetCopyButton.Margin = [System.Windows.Thickness]::new(8, -5, -10, -5)
             if (-not [bool]$snippet.copyable) {
                 $snippetCopyButton.Visibility = [System.Windows.Visibility]::Collapsed
             }
@@ -1086,21 +1153,12 @@ function Show-HudWindow {
                 param($sender, $event)
                 try {
                     [System.Windows.Clipboard]::SetText($snippetTextBox.Text)
-                    $sender.Content = 'OK'
                 }
                 catch {
-                    $sender.Content = 'Failed'
                 }
-                $resetTimer = [System.Windows.Threading.DispatcherTimer]::new()
-                $resetTimer.Interval = [TimeSpan]::FromMilliseconds(900)
-                $resetTimer.Add_Tick({
-                    param($timerSender, $timerEvent)
-                    $timerSender.Stop()
-                    $sender.Content = 'Copy'
-                }.GetNewClosure())
-                $resetTimer.Start()
                 $event.Handled = $true
             }.GetNewClosure())
+            [System.Windows.Controls.Grid]::SetColumn($snippetCopyButton, 1)
             [void]$snippetGrid.Children.Add($snippetCopyButton)
 
             $snippetBorder.Child = $snippetGrid

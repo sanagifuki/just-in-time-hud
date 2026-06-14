@@ -567,6 +567,10 @@ function Show-HudWindow {
             $snippetBorder.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Left
 
             $snippetGrid = [System.Windows.Controls.Grid]::new()
+            $snippetGrid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
+            $snippetGrid.ColumnDefinitions[0].Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
+            $snippetGrid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
+            $snippetGrid.ColumnDefinitions[1].Width = [System.Windows.GridLength]::Auto
 
             $snippetTextBox = [System.Windows.Controls.TextBox]::new()
             $snippetTextBox.Text = [string]$snippet.text
@@ -585,13 +589,21 @@ function Show-HudWindow {
             $snippetTextBox.MaxHeight = $script:HudSnippetMaxHeight
             $snippetTextBox.VerticalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Hidden
             $snippetTextBox.HorizontalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Disabled
+            [System.Windows.Controls.Grid]::SetColumn($snippetTextBox, 0)
             [void]$snippetGrid.Children.Add($snippetTextBox)
 
+            $lineCount = (([string]$snippet.text) -split "(`r`n|`n|`r)").Count
+            $copyLabel = if ($lineCount -le 3) {
+                'cp'
+            }
+            else {
+                "c`no`np`ny"
+            }
             $snippetCopyButton = [System.Windows.Controls.Button]::new()
-            $snippetCopyButton.Content = 'Copy'
-            $snippetCopyButton.Width = 40
-            $snippetCopyButton.Height = 20
-            $snippetCopyButton.Padding = [System.Windows.Thickness]::new(6, 0, 6, 0)
+            $snippetCopyButton.Content = $copyLabel
+            $snippetCopyButton.Width = 22
+            $snippetCopyButton.MinHeight = 20
+            $snippetCopyButton.Padding = [System.Windows.Thickness]::new(0)
             $snippetCopyButton.BorderThickness = [System.Windows.Thickness]::new(0)
             $snippetCopyButtonBackground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#D1D5DB')
             $snippetCopyButtonBackground.Opacity = 0.85
@@ -599,8 +611,9 @@ function Show-HudWindow {
             $snippetCopyButton.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#374151')
             $snippetCopyButton.FontFamily = $script:HudFavoriteFontFamily
             $snippetCopyButton.FontSize = $script:HudFavoriteFilterFontSize
-            $snippetCopyButton.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Right
-            $snippetCopyButton.VerticalAlignment = [System.Windows.VerticalAlignment]::Top
+            $snippetCopyButton.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Stretch
+            $snippetCopyButton.VerticalAlignment = [System.Windows.VerticalAlignment]::Stretch
+            $snippetCopyButton.Margin = [System.Windows.Thickness]::new(8, -5, -10, -5)
             if (-not [bool]$snippet.copyable) {
                 $snippetCopyButton.Visibility = [System.Windows.Visibility]::Collapsed
             }
@@ -608,21 +621,12 @@ function Show-HudWindow {
                 param($sender, $event)
                 try {
                     [System.Windows.Clipboard]::SetText($snippetTextBox.Text)
-                    $sender.Content = 'OK'
                 }
                 catch {
-                    $sender.Content = 'Failed'
                 }
-                $resetTimer = [System.Windows.Threading.DispatcherTimer]::new()
-                $resetTimer.Interval = [TimeSpan]::FromMilliseconds(900)
-                $resetTimer.Add_Tick({
-                    param($timerSender, $timerEvent)
-                    $timerSender.Stop()
-                    $sender.Content = 'Copy'
-                }.GetNewClosure())
-                $resetTimer.Start()
                 $event.Handled = $true
             }.GetNewClosure())
+            [System.Windows.Controls.Grid]::SetColumn($snippetCopyButton, 1)
             [void]$snippetGrid.Children.Add($snippetCopyButton)
 
             $snippetBorder.Child = $snippetGrid
