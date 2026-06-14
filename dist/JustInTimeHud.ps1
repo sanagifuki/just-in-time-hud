@@ -1,6 +1,6 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: 1cdb4b1
+# Source commit: b13d4ab
 
 $script:EmbeddedHudDataJson = @'
 [
@@ -1131,8 +1131,25 @@ function Show-HudWindow {
             else {
                 "c`no`np`ny"
             }
+            $copyOkLabel = if ($lineCount -le 3) {
+                'ok'
+            }
+            else {
+                "o`nk"
+            }
+            $copyNgLabel = if ($lineCount -le 3) {
+                'ng'
+            }
+            else {
+                "n`ng"
+            }
             $snippetCopyButton = [System.Windows.Controls.Button]::new()
             $snippetCopyButton.Content = $copyLabel
+            $snippetCopyButton.Tag = [pscustomobject]@{
+                Copy = $copyLabel
+                Ok = $copyOkLabel
+                Ng = $copyNgLabel
+            }
             $snippetCopyButton.Width = 22
             $snippetCopyButton.MinHeight = 20
             $snippetCopyButton.Padding = [System.Windows.Thickness]::new(0)
@@ -1151,11 +1168,22 @@ function Show-HudWindow {
             }
             $snippetCopyButton.Add_Click({
                 param($sender, $event)
+                $copyLabels = $sender.Tag
                 try {
                     [System.Windows.Clipboard]::SetText($snippetTextBox.Text)
+                    $sender.Content = $copyLabels.Ok
                 }
                 catch {
+                    $sender.Content = $copyLabels.Ng
                 }
+                $copyResetTimer = [System.Windows.Threading.DispatcherTimer]::new()
+                $copyResetTimer.Interval = [TimeSpan]::FromMilliseconds(900)
+                $copyResetTimer.Add_Tick({
+                    param($timerSender, $timerEvent)
+                    $timerSender.Stop()
+                    $sender.Content = $sender.Tag.Copy
+                }.GetNewClosure())
+                $copyResetTimer.Start()
                 $event.Handled = $true
             }.GetNewClosure())
             [System.Windows.Controls.Grid]::SetColumn($snippetCopyButton, 1)
