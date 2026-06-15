@@ -1,4 +1,7 @@
 {
+  // HUDを表示するモニター番号。0始まり。
+  "displayMonitorIndex": 0,
+
   // HUDパネル左上の表示座標。
   "panelX": 1480,
   "panelY": 20,

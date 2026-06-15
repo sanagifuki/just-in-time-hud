@@ -7,9 +7,14 @@ function Show-HudWindow {
         [pscustomobject]$Settings
     )
 
-    $screen = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-    $visibleLeft = 0
-    $visibleTop = 0
+    $screens = @([System.Windows.Forms.Screen]::AllScreens)
+    $displayMonitorIndex = [Math]::Max(0, [int]$Settings.displayMonitorIndex)
+    if ($displayMonitorIndex -ge $screens.Count) {
+        $displayMonitorIndex = 0
+    }
+    $screen = $screens[$displayMonitorIndex].Bounds
+    $visibleLeft = $screen.Left
+    $visibleTop = $screen.Top
     $visibleWidth = $screen.Width
     $visibleHeight = $screen.Height
     $panelX = [int]$Settings.panelX
@@ -21,8 +26,8 @@ function Show-HudWindow {
     $showRecentPanel = [bool]$Settings.showRecentPanel
     $editorWidth = 920
     $editorHeight = 620
-    $editorLeft = [Math]::Max(0, [int](($screen.Width - $editorWidth) / 2))
-    $editorTop = [Math]::Max(0, [int](($screen.Height - $editorHeight) / 2))
+    $editorLeft = $visibleLeft + [Math]::Max(0, [int](($screen.Width - $editorWidth) / 2))
+    $editorTop = $visibleTop + [Math]::Max(0, [int](($screen.Height - $editorHeight) / 2))
     $fontFamily = [string]$Settings.fontFamily
     $titleFontSize = [double]$Settings.titleFontSize
     $detailTitleFontSize = [double]$Settings.detailTitleFontSize

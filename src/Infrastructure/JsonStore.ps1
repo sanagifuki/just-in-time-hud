@@ -125,6 +125,7 @@ function Read-HudSettings {
     )
 
     $defaults = [pscustomobject]@{
+        displayMonitorIndex = 0
         panelX = 32
         panelY = 96
         recentPanelX = 464
@@ -158,7 +159,7 @@ function Read-HudSettings {
     }
 
     $settings = Remove-JsoncComments -Text (Get-Content -LiteralPath $Path -Raw -Encoding UTF8) | ConvertFrom-Json
-    foreach ($name in @('panelX', 'panelY', 'recentPanelX', 'recentPanelY', 'panelWidth', 'panelHeight', 'showRecentPanel', 'fontFamily', 'titleFontSize', 'detailTitleFontSize', 'featureTitleFontSize', 'filterFontSize', 'listFontSize', 'detailFontSize', 'snippetMaxHeight')) {
+    foreach ($name in @('displayMonitorIndex', 'panelX', 'panelY', 'recentPanelX', 'recentPanelY', 'panelWidth', 'panelHeight', 'showRecentPanel', 'fontFamily', 'titleFontSize', 'detailTitleFontSize', 'featureTitleFontSize', 'filterFontSize', 'listFontSize', 'detailFontSize', 'snippetMaxHeight')) {
         if ($null -eq $settings.$name) {
             $settings | Add-Member -NotePropertyName $name -NotePropertyValue $defaults.$name -Force
         }

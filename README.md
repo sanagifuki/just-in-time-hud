@@ -191,6 +191,7 @@ HUD右上の `Edit` から、親分類・中分類・機能の追加、削除、
 
 ```jsonc
 {
+  "displayMonitorIndex": 0,
   "panelX": 1480,
   "panelY": 20,
   "recentPanelX": 1480,
@@ -219,8 +220,9 @@ HUD右上の `Edit` から、親分類・中分類・機能の追加、削除、
 
 | 設定 | 説明 |
 | --- | --- |
-| `panelX`, `panelY` | 検索HUDパネルの左上座標 |
-| `recentPanelX`, `recentPanelY` | 直近詳細HUDパネルの左上座標 |
+| `displayMonitorIndex` | HUDを表示するモニター番号。0始まり |
+| `panelX`, `panelY` | 検索HUDパネルの左上座標。選択モニター内の相対座標 |
+| `recentPanelX`, `recentPanelY` | 直近詳細HUDパネルの左上座標。選択モニター内の相対座標 |
 | `panelWidth`, `panelHeight` | メイン、直近、お気に入りの各HUDパネル共通サイズ |
 | `showRecentPanel` | 直近詳細HUDを表示するか |
 | `fontFamily` | HUD全体のフォント |
