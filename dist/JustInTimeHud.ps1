@@ -1,6 +1,6 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: 711566d
+# Source commit: 885b19c
 
 $script:HudSingleFile = $true
 
@@ -120,7 +120,7 @@ $script:EmbeddedHudDataJson = @'
 $script:EmbeddedHudSettingsJsonc = @'
 {
   // HUDを表示するモニター番号。0始まり。
-  "displayMonitorIndex": 0,
+  "displayMonitorIndex": 1,
 
   // HUDパネル左上の表示座標。
   "panelX": 1480,
@@ -1182,7 +1182,14 @@ function Show-HudWindow {
     }
 
     function global:Save-HudJsonFromEvent {
-        param([Parameter(Mandatory = $true)][object[]]$Items)
+        param([AllowNull()][object[]]$Items)
+
+        if ($null -eq $Items) {
+            if ($null -eq $script:HudState -or $null -eq $script:HudState.Items) {
+                return
+            }
+            $Items = @($script:HudState.Items)
+        }
 
         $directory = Split-Path -Parent $script:DefaultHudDataPath
         if ($directory -and -not (Test-Path -LiteralPath $directory)) {
@@ -2172,7 +2179,7 @@ function Show-HudWindow {
             $unfavoriteButton.Add_Click({
                 param($sender, $event)
                 $entry.Feature.PSObject.Properties.Remove('favorite')
-                Save-HudJsonFromEvent -Items @($script:HudState.Items)
+                Save-HudJsonFromEvent
                 if ($script:HudState.SelectedFeature -eq $entry.Feature) {
                     Set-FavoriteButtonStateFromEvent -Feature $entry.Feature
                 }
@@ -2295,7 +2302,7 @@ function Show-HudWindow {
             Set-HudPropertyFromEvent -Target $feature -Name 'favorite' -Value $true
         }
 
-        Save-HudJsonFromEvent -Items @($script:HudState.Items)
+        Save-HudJsonFromEvent
         Set-FavoriteButtonStateFromEvent -Feature $feature
         Refresh-HudFavoritePanelsFromEvent
     }

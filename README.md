@@ -12,6 +12,10 @@ Just-in-Time HUD は、ショートカット、コマンド、操作手順、テ
 | :---: | :---: | :---: | :---: |
 | 親分類 | 中分類 | 機能リスト | 詳細画面 |
 
+## デモ
+
+<video src="assets/demo/just-in-time-hud-demo.mp4" controls width="720"></video>
+
 ## 特徴
 
 - PowerShell / .NET WPF で動作
