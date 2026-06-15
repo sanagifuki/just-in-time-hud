@@ -1,6 +1,8 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: b13d4ab
+# Source commit: 8a847de
+
+$script:HudSingleFile = $true
 
 $script:EmbeddedHudDataJson = @'
 [
@@ -113,7 +115,6 @@ $script:EmbeddedHudDataJson = @'
     ]
   }
 ]
-
 '@
 
 $script:EmbeddedHudSettingsJsonc = @'
@@ -126,9 +127,12 @@ $script:EmbeddedHudSettingsJsonc = @'
   "recentPanelX": 1480,
   "recentPanelY": 395,
 
-  // HUDパネルのサイズ。
+  // メイン、直近、お気に入りの各HUDパネル共通サイズ。
   "panelWidth": 420,
   "panelHeight": 360,
+
+  // 直近詳細HUDを表示するか。
+  "showRecentPanel": true,
 
   // HUD全体のフォント。
   "fontFamily": "Yu Gothic UI",
@@ -149,12 +153,6 @@ $script:EmbeddedHudSettingsJsonc = @'
 
   // Snippets 1件あたりの最大表示高さ。超えた分はバー非表示でスクロール可能。
   "snippetMaxHeight": 80,
-
-  // 左クリック/右クリックの表示ラベル。内部値は 1 / 0 のまま。
-  "bitLabels": {
-    "one": "1",
-    "zero": "0"
-  },
 
   // 全画面入力面の背景RGBA。aは 0.0-1.0 または 0-255。
   "backgroundRgba": {
@@ -220,7 +218,7 @@ function Read-HudJson {
     )
 
     if (-not (Test-Path -LiteralPath $Path)) {
-        if ($script:EmbeddedHudDataJson) {
+        if ($script:HudSingleFile -and $script:EmbeddedHudDataJson) {
             Write-HudTextFileIfMissing -Path $Path -Text $script:EmbeddedHudDataJson
         }
         elseif ($script:DefaultHudSampleDataPath -and (Test-Path -LiteralPath $script:DefaultHudSampleDataPath)) {
@@ -346,6 +344,7 @@ function Read-HudSettings {
         recentPanelY = 96
         panelWidth = 420
         panelHeight = 360
+        showRecentPanel = $true
         fontFamily = 'Yu Gothic UI'
         titleFontSize = 15
         detailTitleFontSize = 15
@@ -354,10 +353,6 @@ function Read-HudSettings {
         listFontSize = 14
         detailFontSize = 12
         snippetMaxHeight = 80
-        bitLabels = [pscustomobject]@{
-            one = '1'
-            zero = '0'
-        }
         backgroundRgba = [pscustomobject]@{
             r = 255
             g = 255
@@ -367,7 +362,7 @@ function Read-HudSettings {
     }
 
     if (-not (Test-Path -LiteralPath $Path)) {
-        if ($script:EmbeddedHudSettingsJsonc) {
+        if ($script:HudSingleFile -and $script:EmbeddedHudSettingsJsonc) {
             Write-HudTextFileIfMissing -Path $Path -Text $script:EmbeddedHudSettingsJsonc
         }
         else {
@@ -376,17 +371,9 @@ function Read-HudSettings {
     }
 
     $settings = Remove-JsoncComments -Text (Get-Content -LiteralPath $Path -Raw -Encoding UTF8) | ConvertFrom-Json
-    foreach ($name in @('panelX', 'panelY', 'recentPanelX', 'recentPanelY', 'panelWidth', 'panelHeight', 'fontFamily', 'titleFontSize', 'detailTitleFontSize', 'featureTitleFontSize', 'filterFontSize', 'listFontSize', 'detailFontSize', 'snippetMaxHeight')) {
+    foreach ($name in @('panelX', 'panelY', 'recentPanelX', 'recentPanelY', 'panelWidth', 'panelHeight', 'showRecentPanel', 'fontFamily', 'titleFontSize', 'detailTitleFontSize', 'featureTitleFontSize', 'filterFontSize', 'listFontSize', 'detailFontSize', 'snippetMaxHeight')) {
         if ($null -eq $settings.$name) {
             $settings | Add-Member -NotePropertyName $name -NotePropertyValue $defaults.$name -Force
-        }
-    }
-    if ($null -eq $settings.bitLabels) {
-        $settings | Add-Member -NotePropertyName 'bitLabels' -NotePropertyValue $defaults.bitLabels -Force
-    }
-    foreach ($name in @('one', 'zero')) {
-        if ($null -eq $settings.bitLabels.$name) {
-            $settings.bitLabels | Add-Member -NotePropertyName $name -NotePropertyValue $defaults.bitLabels.$name -Force
         }
     }
     if ($null -eq $settings.backgroundRgba) {
@@ -499,25 +486,6 @@ function Test-HudInitialMatch {
     return $initials.StartsWith($Filter, [System.StringComparison]::OrdinalIgnoreCase)
 }
 
-function ConvertTo-HudBitDisplayText {
-    param(
-        [string]$BitText
-    )
-
-    if (-not $script:HudBitLabels) {
-        return $BitText
-    }
-
-    $chars = foreach ($char in $BitText.ToCharArray()) {
-        switch ($char) {
-            '1' { $script:HudBitLabels.one }
-            '0' { $script:HudBitLabels.zero }
-            default { [string]$char }
-        }
-    }
-    return ($chars -join '')
-}
-
 function Reset-HudFilter {
     param(
         [Parameter(Mandatory = $true)]
@@ -550,6 +518,7 @@ function Show-HudWindow {
     $recentPanelY = [int]$Settings.recentPanelY
     $panelWidth = [int]$Settings.panelWidth
     $panelHeight = [int]$Settings.panelHeight
+    $showRecentPanel = [bool]$Settings.showRecentPanel
     $editorWidth = 920
     $editorHeight = 620
     $editorLeft = [Math]::Max(0, [int](($screen.Width - $editorWidth) / 2))
@@ -562,7 +531,6 @@ function Show-HudWindow {
     $listFontSize = [double]$Settings.listFontSize
     $detailFontSize = [double]$Settings.detailFontSize
     $backgroundColor = ConvertTo-WpfColorCode -Rgba $Settings.backgroundRgba
-    $script:HudBitLabels = $Settings.bitLabels
     $script:HudIsRetreated = $false
     $script:HudPreviousWindowHandle = [HudNativeMethods]::GetForegroundWindow()
     $script:HudCopyResetTimer = $null
@@ -573,6 +541,7 @@ function Show-HudWindow {
     $script:HudRecentHistory = @()
     $script:HudRecentHistoryIndex = 0
     $script:HudRecentHistoryMax = 10
+    $script:HudShowRecentPanel = $showRecentPanel
     $script:HudFavoritePanels = @()
     $script:HudFavoritePanelPositions = @{}
     $script:HudState = $State
@@ -1059,10 +1028,11 @@ function Show-HudWindow {
             return
         }
 
-        $parts = [regex]::Split($Text.Trim(), "(?m)^\s*---\s*$")
+        $splitText = [regex]::Replace($Text.Trim(), "(?m)^(\s*)\\---(\s*)$", '$1__HUD_ESCAPED_SNIPPET_DELIMITER__$2')
+        $parts = [regex]::Split($splitText, "(?m)^\s*---\s*$")
         $snippets = @()
         foreach ($part in $parts) {
-            $snippetText = $part.Trim()
+            $snippetText = $part.Trim().Replace('__HUD_ESCAPED_SNIPPET_DELIMITER__', '---')
             if ([string]::IsNullOrWhiteSpace($snippetText)) { continue }
             $snippets += $snippetText
         }
@@ -1079,6 +1049,13 @@ function Show-HudWindow {
         elseif ($Feature.PSObject.Properties.Name -contains 'snippets') {
             $Feature.PSObject.Properties.Remove('snippets')
         }
+    }
+
+    function Format-HudSnippetTextForEditor {
+        param([AllowNull()][string]$Text)
+
+        if ($null -eq $Text) { return '' }
+        return [regex]::Replace([string]$Text, "(?m)^(\s*)---(\s*)$", '$1\---$2')
     }
 
     function global:Add-HudSnippetRows {
@@ -1347,7 +1324,7 @@ function Show-HudWindow {
 
         $editorTitleBox.Text = [string]$feature.title
         $snippets = @(Get-HudFeatureSnippets -Feature $feature)
-        $editorShortcutBox.Text = (($snippets | ForEach-Object { [string]$_.text }) -join "`r`n---`r`n")
+        $editorShortcutBox.Text = (($snippets | ForEach-Object { Format-HudSnippetTextForEditor -Text ([string]$_.text) }) -join "`r`n---`r`n")
         $editorCopyableBox.IsChecked = ($feature.PSObject.Properties.Name -contains 'copyable' -and [bool]$feature.copyable)
         $editorFavoriteBox.IsChecked = ($feature.PSObject.Properties.Name -contains 'favorite' -and [bool]$feature.favorite)
         $editorDescriptionBox.Text = [string]$feature.description
@@ -1613,7 +1590,7 @@ function Show-HudWindow {
                                    Foreground="#9CA3AF"
                                    Margin="8,0,0,0"/>
                     </StackPanel>
-                    <TextBox Name="EditorShortcutBox" Grid.Row="5" FontFamily="$fontFamily" Margin="0,2,0,8" AcceptsReturn="True" Height="88" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" ToolTip="複数に分ける場合は、区切り行として --- を入れる"/>
+                    <TextBox Name="EditorShortcutBox" Grid.Row="5" FontFamily="$fontFamily" Margin="0,2,0,8" AcceptsReturn="True" Height="88" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" ToolTip="複数に分ける場合は、区切り行として --- を入れる。本文中に --- だけの行を入れる場合は \--- と書く"/>
                     <TextBlock Name="EditorDescriptionLabel" Grid.Row="6" Text="Description:" FontFamily="$fontFamily" Foreground="#6B7280"/>
                     <TextBox Name="EditorDescriptionBox" Grid.Row="7" FontFamily="$fontFamily" Margin="0,2,0,0" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
                     <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
@@ -1875,6 +1852,17 @@ function Show-HudWindow {
         }
     }
 
+    function Set-RecentPanelVisibility {
+        param([bool]$Visible)
+
+        if (-not $script:HudShowRecentPanel -or -not $Visible -or $script:HudIsRetreated) {
+            $recentPanel.Visibility = [System.Windows.Visibility]::Collapsed
+            return
+        }
+
+        $recentPanel.Visibility = [System.Windows.Visibility]::Visible
+    }
+
     function Update-RecentDetailWindow {
         param(
             [Parameter(Mandatory = $true)]
@@ -1901,9 +1889,7 @@ function Show-HudWindow {
             $recentShortcutArea.Visibility = [System.Windows.Visibility]::Collapsed
         }
 
-        if (-not $script:HudIsRetreated) {
-            $recentPanel.Visibility = [System.Windows.Visibility]::Visible
-        }
+        Set-RecentPanelVisibility -Visible $true
     }
 
     function Update-RecentHistoryNav {
@@ -1927,9 +1913,7 @@ function Show-HudWindow {
         $recentShortcutArea.Visibility = [System.Windows.Visibility]::Collapsed
         $recentDescriptionText.Text = '詳細画面を開くと、ここに直近の内容が残ります。'
         Update-RecentHistoryNav
-        if (-not $script:HudIsRetreated) {
-            $recentPanel.Visibility = [System.Windows.Visibility]::Visible
-        }
+        Set-RecentPanelVisibility -Visible $true
     }
 
     function Show-RecentHistoryEntry {

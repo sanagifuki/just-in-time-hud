@@ -72,25 +72,6 @@ function Test-HudInitialMatch {
     return $initials.StartsWith($Filter, [System.StringComparison]::OrdinalIgnoreCase)
 }
 
-function ConvertTo-HudBitDisplayText {
-    param(
-        [string]$BitText
-    )
-
-    if (-not $script:HudBitLabels) {
-        return $BitText
-    }
-
-    $chars = foreach ($char in $BitText.ToCharArray()) {
-        switch ($char) {
-            '1' { $script:HudBitLabels.one }
-            '0' { $script:HudBitLabels.zero }
-            default { [string]$char }
-        }
-    }
-    return ($chars -join '')
-}
-
 function Reset-HudFilter {
     param(
         [Parameter(Mandatory = $true)]

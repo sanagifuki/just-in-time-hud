@@ -7,9 +7,12 @@
   "recentPanelX": 1480,
   "recentPanelY": 395,
 
-  // HUDパネルのサイズ。
+  // メイン、直近、お気に入りの各HUDパネル共通サイズ。
   "panelWidth": 420,
   "panelHeight": 360,
+
+  // 直近詳細HUDを表示するか。
+  "showRecentPanel": true,
 
   // HUD全体のフォント。
   "fontFamily": "Yu Gothic UI",
@@ -30,12 +33,6 @@
 
   // Snippets 1件あたりの最大表示高さ。超えた分はバー非表示でスクロール可能。
   "snippetMaxHeight": 80,
-
-  // 左クリック/右クリックの表示ラベル。内部値は 1 / 0 のまま。
-  "bitLabels": {
-    "one": "1",
-    "zero": "0"
-  },
 
   // 全画面入力面の背景RGBA。aは 0.0-1.0 または 0-255。
   "backgroundRgba": {

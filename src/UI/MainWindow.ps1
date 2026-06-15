@@ -18,6 +18,7 @@ function Show-HudWindow {
     $recentPanelY = [int]$Settings.recentPanelY
     $panelWidth = [int]$Settings.panelWidth
     $panelHeight = [int]$Settings.panelHeight
+    $showRecentPanel = [bool]$Settings.showRecentPanel
     $editorWidth = 920
     $editorHeight = 620
     $editorLeft = [Math]::Max(0, [int](($screen.Width - $editorWidth) / 2))
@@ -30,7 +31,6 @@ function Show-HudWindow {
     $listFontSize = [double]$Settings.listFontSize
     $detailFontSize = [double]$Settings.detailFontSize
     $backgroundColor = ConvertTo-WpfColorCode -Rgba $Settings.backgroundRgba
-    $script:HudBitLabels = $Settings.bitLabels
     $script:HudIsRetreated = $false
     $script:HudPreviousWindowHandle = [HudNativeMethods]::GetForegroundWindow()
     $script:HudCopyResetTimer = $null
@@ -41,6 +41,7 @@ function Show-HudWindow {
     $script:HudRecentHistory = @()
     $script:HudRecentHistoryIndex = 0
     $script:HudRecentHistoryMax = 10
+    $script:HudShowRecentPanel = $showRecentPanel
     $script:HudFavoritePanels = @()
     $script:HudFavoritePanelPositions = @{}
     $script:HudState = $State
@@ -527,10 +528,11 @@ function Show-HudWindow {
             return
         }
 
-        $parts = [regex]::Split($Text.Trim(), "(?m)^\s*---\s*$")
+        $splitText = [regex]::Replace($Text.Trim(), "(?m)^(\s*)\\---(\s*)$", '$1__HUD_ESCAPED_SNIPPET_DELIMITER__$2')
+        $parts = [regex]::Split($splitText, "(?m)^\s*---\s*$")
         $snippets = @()
         foreach ($part in $parts) {
-            $snippetText = $part.Trim()
+            $snippetText = $part.Trim().Replace('__HUD_ESCAPED_SNIPPET_DELIMITER__', '---')
             if ([string]::IsNullOrWhiteSpace($snippetText)) { continue }
             $snippets += $snippetText
         }
@@ -547,6 +549,13 @@ function Show-HudWindow {
         elseif ($Feature.PSObject.Properties.Name -contains 'snippets') {
             $Feature.PSObject.Properties.Remove('snippets')
         }
+    }
+
+    function Format-HudSnippetTextForEditor {
+        param([AllowNull()][string]$Text)
+
+        if ($null -eq $Text) { return '' }
+        return [regex]::Replace([string]$Text, "(?m)^(\s*)---(\s*)$", '$1\---$2')
     }
 
     function global:Add-HudSnippetRows {
@@ -815,7 +824,7 @@ function Show-HudWindow {
 
         $editorTitleBox.Text = [string]$feature.title
         $snippets = @(Get-HudFeatureSnippets -Feature $feature)
-        $editorShortcutBox.Text = (($snippets | ForEach-Object { [string]$_.text }) -join "`r`n---`r`n")
+        $editorShortcutBox.Text = (($snippets | ForEach-Object { Format-HudSnippetTextForEditor -Text ([string]$_.text) }) -join "`r`n---`r`n")
         $editorCopyableBox.IsChecked = ($feature.PSObject.Properties.Name -contains 'copyable' -and [bool]$feature.copyable)
         $editorFavoriteBox.IsChecked = ($feature.PSObject.Properties.Name -contains 'favorite' -and [bool]$feature.favorite)
         $editorDescriptionBox.Text = [string]$feature.description
@@ -1081,7 +1090,7 @@ function Show-HudWindow {
                                    Foreground="#9CA3AF"
                                    Margin="8,0,0,0"/>
                     </StackPanel>
-                    <TextBox Name="EditorShortcutBox" Grid.Row="5" FontFamily="$fontFamily" Margin="0,2,0,8" AcceptsReturn="True" Height="88" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" ToolTip="複数に分ける場合は、区切り行として --- を入れる"/>
+                    <TextBox Name="EditorShortcutBox" Grid.Row="5" FontFamily="$fontFamily" Margin="0,2,0,8" AcceptsReturn="True" Height="88" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" ToolTip="複数に分ける場合は、区切り行として --- を入れる。本文中に --- だけの行を入れる場合は \--- と書く"/>
                     <TextBlock Name="EditorDescriptionLabel" Grid.Row="6" Text="Description:" FontFamily="$fontFamily" Foreground="#6B7280"/>
                     <TextBox Name="EditorDescriptionBox" Grid.Row="7" FontFamily="$fontFamily" Margin="0,2,0,0" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
                     <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
@@ -1343,6 +1352,17 @@ function Show-HudWindow {
         }
     }
 
+    function Set-RecentPanelVisibility {
+        param([bool]$Visible)
+
+        if (-not $script:HudShowRecentPanel -or -not $Visible -or $script:HudIsRetreated) {
+            $recentPanel.Visibility = [System.Windows.Visibility]::Collapsed
+            return
+        }
+
+        $recentPanel.Visibility = [System.Windows.Visibility]::Visible
+    }
+
     function Update-RecentDetailWindow {
         param(
             [Parameter(Mandatory = $true)]
@@ -1369,9 +1389,7 @@ function Show-HudWindow {
             $recentShortcutArea.Visibility = [System.Windows.Visibility]::Collapsed
         }
 
-        if (-not $script:HudIsRetreated) {
-            $recentPanel.Visibility = [System.Windows.Visibility]::Visible
-        }
+        Set-RecentPanelVisibility -Visible $true
     }
 
     function Update-RecentHistoryNav {
@@ -1395,9 +1413,7 @@ function Show-HudWindow {
         $recentShortcutArea.Visibility = [System.Windows.Visibility]::Collapsed
         $recentDescriptionText.Text = '詳細画面を開くと、ここに直近の内容が残ります。'
         Update-RecentHistoryNav
-        if (-not $script:HudIsRetreated) {
-            $recentPanel.Visibility = [System.Windows.Visibility]::Visible
-        }
+        Set-RecentPanelVisibility -Visible $true
     }
 
     function Show-RecentHistoryEntry {

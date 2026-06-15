@@ -15,8 +15,10 @@ try {
     [void]$builder.AppendLine("# Source commit: $commit")
 }
 catch {
-    [void]$builder.AppendLine('# Source commit: unknown')
+[void]$builder.AppendLine('# Source commit: unknown')
 }
+[void]$builder.AppendLine()
+[void]$builder.AppendLine('$script:HudSingleFile = $true')
 [void]$builder.AppendLine()
 
 $dataPath = Join-Path $repoRoot 'data\hud-items.sample.json'

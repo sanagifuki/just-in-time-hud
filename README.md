@@ -197,6 +197,7 @@ HUD右上の `Edit` から、親分類・中分類・機能の追加、削除、
   "recentPanelY": 395,
   "panelWidth": 420,
   "panelHeight": 360,
+  "showRecentPanel": true,
   "fontFamily": "Yu Gothic UI",
   "titleFontSize": 13,
   "detailTitleFontSize": 13,
@@ -205,10 +206,6 @@ HUD右上の `Edit` から、親分類・中分類・機能の追加、削除、
   "listFontSize": 12,
   "detailFontSize": 12,
   "snippetMaxHeight": 80,
-  "bitLabels": {
-    "one": "1",
-    "zero": "0"
-  },
   "backgroundRgba": {
     "r": 0,
     "g": 0,
@@ -224,12 +221,11 @@ HUD右上の `Edit` から、親分類・中分類・機能の追加、削除、
 | --- | --- |
 | `panelX`, `panelY` | 検索HUDパネルの左上座標 |
 | `recentPanelX`, `recentPanelY` | 直近詳細HUDパネルの左上座標 |
-| `panelWidth`, `panelHeight` | 各HUDパネルのサイズ |
+| `panelWidth`, `panelHeight` | メイン、直近、お気に入りの各HUDパネル共通サイズ |
+| `showRecentPanel` | 直近詳細HUDを表示するか |
 | `fontFamily` | HUD全体のフォント |
 | `featureTitleFontSize` | 詳細画面の機能名タイトルサイズ |
 | `snippetMaxHeight` | Snippets 1件あたりの最大表示高さ |
-| `bitLabels.one` | `1` の表示文字 |
-| `bitLabels.zero` | `0` の表示文字 |
 | `backgroundRgba` | 全画面背景のRGBA |
 
 `backgroundRgba.a` は `0.0` から `1.0`、または `0` から `255` で指定できます。

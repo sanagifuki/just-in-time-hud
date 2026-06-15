@@ -5,7 +5,7 @@ function Read-HudJson {
     )
 
     if (-not (Test-Path -LiteralPath $Path)) {
-        if ($script:EmbeddedHudDataJson) {
+        if ($script:HudSingleFile -and $script:EmbeddedHudDataJson) {
             Write-HudTextFileIfMissing -Path $Path -Text $script:EmbeddedHudDataJson
         }
         elseif ($script:DefaultHudSampleDataPath -and (Test-Path -LiteralPath $script:DefaultHudSampleDataPath)) {
@@ -131,6 +131,7 @@ function Read-HudSettings {
         recentPanelY = 96
         panelWidth = 420
         panelHeight = 360
+        showRecentPanel = $true
         fontFamily = 'Yu Gothic UI'
         titleFontSize = 15
         detailTitleFontSize = 15
@@ -139,10 +140,6 @@ function Read-HudSettings {
         listFontSize = 14
         detailFontSize = 12
         snippetMaxHeight = 80
-        bitLabels = [pscustomobject]@{
-            one = '1'
-            zero = '0'
-        }
         backgroundRgba = [pscustomobject]@{
             r = 255
             g = 255
@@ -152,7 +149,7 @@ function Read-HudSettings {
     }
 
     if (-not (Test-Path -LiteralPath $Path)) {
-        if ($script:EmbeddedHudSettingsJsonc) {
+        if ($script:HudSingleFile -and $script:EmbeddedHudSettingsJsonc) {
             Write-HudTextFileIfMissing -Path $Path -Text $script:EmbeddedHudSettingsJsonc
         }
         else {
@@ -161,17 +158,9 @@ function Read-HudSettings {
     }
 
     $settings = Remove-JsoncComments -Text (Get-Content -LiteralPath $Path -Raw -Encoding UTF8) | ConvertFrom-Json
-    foreach ($name in @('panelX', 'panelY', 'recentPanelX', 'recentPanelY', 'panelWidth', 'panelHeight', 'fontFamily', 'titleFontSize', 'detailTitleFontSize', 'featureTitleFontSize', 'filterFontSize', 'listFontSize', 'detailFontSize', 'snippetMaxHeight')) {
+    foreach ($name in @('panelX', 'panelY', 'recentPanelX', 'recentPanelY', 'panelWidth', 'panelHeight', 'showRecentPanel', 'fontFamily', 'titleFontSize', 'detailTitleFontSize', 'featureTitleFontSize', 'filterFontSize', 'listFontSize', 'detailFontSize', 'snippetMaxHeight')) {
         if ($null -eq $settings.$name) {
             $settings | Add-Member -NotePropertyName $name -NotePropertyValue $defaults.$name -Force
-        }
-    }
-    if ($null -eq $settings.bitLabels) {
-        $settings | Add-Member -NotePropertyName 'bitLabels' -NotePropertyValue $defaults.bitLabels -Force
-    }
-    foreach ($name in @('one', 'zero')) {
-        if ($null -eq $settings.bitLabels.$name) {
-            $settings.bitLabels | Add-Member -NotePropertyName $name -NotePropertyValue $defaults.bitLabels.$name -Force
         }
     }
     if ($null -eq $settings.backgroundRgba) {
