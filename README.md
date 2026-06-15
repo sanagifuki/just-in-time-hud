@@ -14,7 +14,7 @@ Just-in-Time HUD は、ショートカット、コマンド、操作手順、テ
 
 ## デモ
 
-<video src="assets/demo/just-in-time-hud-demo.mp4" controls width="720"></video>
+![Just-in-Time HUD demo](assets/demo/just-in-time-hud-demo.gif)
 
 ## 特徴
 
