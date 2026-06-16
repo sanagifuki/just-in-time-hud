@@ -23,6 +23,10 @@ function Show-HudWindow {
     $recentPanelY = [int]$Settings.recentPanelY
     $panelWidth = [int]$Settings.panelWidth
     $panelHeight = [int]$Settings.panelHeight
+    $panelX = [Math]::Max(0, [Math]::Min($visibleWidth - $panelWidth, $panelX))
+    $panelY = [Math]::Max(0, [Math]::Min($visibleHeight - $panelHeight, $panelY))
+    $recentPanelX = [Math]::Max(0, [Math]::Min($visibleWidth - $panelWidth, $recentPanelX))
+    $recentPanelY = [Math]::Max(0, [Math]::Min($visibleHeight - $panelHeight, $recentPanelY))
     $showRecentPanel = [bool]$Settings.showRecentPanel
     $editorWidth = 920
     $editorHeight = 620
@@ -732,6 +736,30 @@ function Show-HudWindow {
         $script:HudDragStartMargin = $Target.Margin
         $Target.CaptureMouse() | Out-Null
         $Event.Handled = $true
+    }
+
+    function Get-HudClampedPanelMargin {
+        param(
+            [Parameter(Mandatory = $true)]
+            [System.Windows.FrameworkElement]$Target,
+
+            [Parameter(Mandatory = $true)]
+            [double]$Left,
+
+            [Parameter(Mandatory = $true)]
+            [double]$Top
+        )
+
+        $targetWidth = if ($Target.ActualWidth -gt 0) { $Target.ActualWidth } else { $Target.Width }
+        $targetHeight = if ($Target.ActualHeight -gt 0) { $Target.ActualHeight } else { $Target.Height }
+        if ([double]::IsNaN($targetWidth) -or $targetWidth -le 0) { $targetWidth = $script:HudFavoritePanelWidth }
+        if ([double]::IsNaN($targetHeight) -or $targetHeight -le 0) { $targetHeight = $script:HudFavoritePanelHeight }
+
+        $maxLeft = [Math]::Max(0, $script:HudFavoriteVisibleWidth - $targetWidth)
+        $maxTop = [Math]::Max(0, $script:HudFavoriteVisibleHeight - $targetHeight)
+        $clampedLeft = [Math]::Max(0, [Math]::Min($maxLeft, $Left))
+        $clampedTop = [Math]::Max(0, [Math]::Min($maxTop, $Top))
+        return [System.Windows.Thickness]::new($clampedLeft, $clampedTop, 0, 0)
     }
 
     function global:Move-HudPanelDrag {
@@ -1572,6 +1600,13 @@ function Show-HudWindow {
             return
         }
 
+        if ($script:HudIsRetreated) {
+            foreach ($favoritePanel in @($script:HudFavoritePanels)) {
+                $favoritePanel.Visibility = [System.Windows.Visibility]::Collapsed
+            }
+            return
+        }
+
         foreach ($favoritePanel in @($script:HudFavoritePanels)) {
             $featureId = [string]$favoritePanel.Tag
             if (-not [string]::IsNullOrWhiteSpace($featureId)) {
@@ -1580,10 +1615,6 @@ function Show-HudWindow {
             [void]$script:HudRoot.Children.Remove($favoritePanel)
         }
         $script:HudFavoritePanels = @()
-
-        if ($script:HudIsRetreated) {
-            return
-        }
 
         $entries = @()
         foreach ($category in @($script:HudState.Items)) {
@@ -1610,10 +1641,12 @@ function Show-HudWindow {
             $featureId = "$($entry.CategoryName)`n$($entry.GroupName)`n$($entry.Feature.title)"
             $border.Tag = $featureId
             if ($script:HudFavoritePanelPositions.ContainsKey($featureId)) {
-                $border.Margin = $script:HudFavoritePanelPositions[$featureId]
+                $savedMargin = $script:HudFavoritePanelPositions[$featureId]
+                $border.Margin = $savedMargin
             }
             else {
-                $border.Margin = Get-HudFavoriteDefaultMarginFromEvent -Index $index
+                $defaultMargin = Get-HudFavoriteDefaultMarginFromEvent -Index $index
+                $border.Margin = Get-HudClampedPanelMargin -Target $border -Left $defaultMargin.Left -Top $defaultMargin.Top
             }
             $border.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#F6F8FA')
             $border.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#B8C0CC')
