@@ -40,6 +40,18 @@ function Show-HudWindow {
     $listFontSize = [double]$Settings.listFontSize
     $detailFontSize = [double]$Settings.detailFontSize
     $backgroundColor = ConvertTo-WpfColorCode -Rgba $Settings.backgroundRgba
+    $brushConverter = [System.Windows.Media.BrushConverter]::new()
+    $script:HudBrushPanelBackground = $brushConverter.ConvertFromString('#F6F8FA')
+    $script:HudBrushPanelBorder = $brushConverter.ConvertFromString('#B8C0CC')
+    $script:HudBrushSnippetBackground = $brushConverter.ConvertFromString('#E5E7EB')
+    $script:HudBrushSnippetCopyBackground = $brushConverter.ConvertFromString('#D1D5DB')
+    $script:HudBrushSnippetCopyBackground.Opacity = 0.85
+    $script:HudBrushTextStrong = $brushConverter.ConvertFromString('#111827')
+    $script:HudBrushTextNormal = $brushConverter.ConvertFromString('#374151')
+    $script:HudBrushTextMuted = $brushConverter.ConvertFromString('#6B7280')
+    $script:HudBrushTextSubtle = $brushConverter.ConvertFromString('#9CA3AF')
+    $script:HudBrushTextPath = $brushConverter.ConvertFromString('#1F2937')
+    $script:HudBrushFavoriteStar = $brushConverter.ConvertFromString('#F59E0B')
     $script:HudIsRetreated = $false
     $script:HudPreviousWindowHandle = [HudNativeMethods]::GetForegroundWindow()
     $script:HudCopyResetTimer = $null
@@ -51,7 +63,7 @@ function Show-HudWindow {
     $script:HudRecentHistoryIndex = 0
     $script:HudRecentHistoryMax = 10
     $script:HudShowRecentPanel = $showRecentPanel
-    $script:HudFavoritePanels = @()
+    $script:HudFavoritePanels = [System.Collections.Generic.List[object]]::new()
     $script:HudFavoritePanelPositions = @{}
     $script:HudState = $State
     $script:HudFavoritePanelWidth = $panelWidth
@@ -461,7 +473,7 @@ function Show-HudWindow {
             [object]$Value
         )
 
-        if ($Target.PSObject.Properties.Name -contains $Name) {
+        if (Test-HudProperty -Target $Target -Name $Name) {
             $Target.$Name = $Value
         }
         else {
@@ -483,12 +495,7 @@ function Show-HudWindow {
             [object]$Value
         )
 
-        if ($Target.PSObject.Properties.Name -contains $Name) {
-            $Target.$Name = $Value
-        }
-        else {
-            $Target | Add-Member -NotePropertyName $Name -NotePropertyValue $Value -Force
-        }
+        Set-HudProperty -Target $Target -Name $Name -Value $Value
     }
 
     function global:Get-HudFeatureSnippets {
@@ -498,21 +505,21 @@ function Show-HudWindow {
             return @()
         }
 
-        $snippets = @()
-        $featureCopyable = ($Feature.PSObject.Properties.Name -contains 'copyable' -and [bool]$Feature.copyable)
-        if ($Feature.PSObject.Properties.Name -contains 'snippets' -and $null -ne $Feature.snippets) {
+        $snippets = [System.Collections.Generic.List[object]]::new()
+        $featureCopyable = (Test-HudProperty -Target $Feature -Name 'copyable') -and [bool]$Feature.copyable
+        if ((Test-HudProperty -Target $Feature -Name 'snippets') -and $null -ne $Feature.snippets) {
             foreach ($snippet in @($Feature.snippets)) {
                 $text = if ($snippet -is [string]) { [string]$snippet } else { [string]$snippet.text }
                 if ([string]::IsNullOrWhiteSpace($text)) { continue }
-                $snippets += [pscustomobject]@{
+                $snippets.Add([pscustomobject]@{
                     text = $text
                     copyable = $featureCopyable
-                }
+                })
             }
-            return $snippets
+            return $snippets.ToArray()
         }
 
-        if ($Feature.PSObject.Properties.Name -contains 'shortcut' -and -not [string]::IsNullOrWhiteSpace([string]$Feature.shortcut)) {
+        if ((Test-HudProperty -Target $Feature -Name 'shortcut') -and -not [string]::IsNullOrWhiteSpace([string]$Feature.shortcut)) {
             return @([pscustomobject]@{
                 text = [string]$Feature.shortcut
                 copyable = $featureCopyable
@@ -529,35 +536,31 @@ function Show-HudWindow {
             [bool]$Copyable
         )
 
-        if ($Feature.PSObject.Properties.Name -contains 'shortcut') { $Feature.PSObject.Properties.Remove('shortcut') }
+        Remove-HudProperty -Target $Feature -Name 'shortcut'
 
         if ([string]::IsNullOrWhiteSpace($Text)) {
-            if ($Feature.PSObject.Properties.Name -contains 'snippets') { $Feature.PSObject.Properties.Remove('snippets') }
-            if ($Feature.PSObject.Properties.Name -contains 'copyable') { $Feature.PSObject.Properties.Remove('copyable') }
+            Remove-HudProperty -Target $Feature -Name 'snippets'
+            Remove-HudProperty -Target $Feature -Name 'copyable'
             return
         }
 
         $splitText = [regex]::Replace($Text.Trim(), "(?m)^(\s*)\\---(\s*)$", '$1__HUD_ESCAPED_SNIPPET_DELIMITER__$2')
         $parts = [regex]::Split($splitText, "(?m)^\s*---\s*$")
-        $snippets = @()
+        $snippets = [System.Collections.Generic.List[string]]::new()
         foreach ($part in $parts) {
             $snippetText = $part.Trim().Replace('__HUD_ESCAPED_SNIPPET_DELIMITER__', '---')
             if ([string]::IsNullOrWhiteSpace($snippetText)) { continue }
-            $snippets += $snippetText
+            $snippets.Add($snippetText)
         }
 
         if ($snippets.Count -gt 0) {
-            Set-HudProperty -Target $Feature -Name 'snippets' -Value @($snippets)
+            Set-HudProperty -Target $Feature -Name 'snippets' -Value @($snippets.ToArray())
             if ($Copyable) {
                 Set-HudProperty -Target $Feature -Name 'copyable' -Value $true
             }
-            elseif ($Feature.PSObject.Properties.Name -contains 'copyable') {
-                $Feature.PSObject.Properties.Remove('copyable')
-            }
+            else { Remove-HudProperty -Target $Feature -Name 'copyable' }
         }
-        elseif ($Feature.PSObject.Properties.Name -contains 'snippets') {
-            $Feature.PSObject.Properties.Remove('snippets')
-        }
+        else { Remove-HudProperty -Target $Feature -Name 'snippets' }
     }
 
     function Format-HudSnippetTextForEditor {
@@ -565,6 +568,16 @@ function Show-HudWindow {
 
         if ($null -eq $Text) { return '' }
         return [regex]::Replace([string]$Text, "(?m)^(\s*)---(\s*)$", '$1\---$2')
+    }
+
+    function Join-HudSnippetTextsForEditor {
+        param([AllowNull()][object[]]$Snippets)
+
+        $texts = [System.Collections.Generic.List[string]]::new()
+        foreach ($snippet in @($Snippets)) {
+            $texts.Add((Format-HudSnippetTextForEditor -Text ([string]$snippet.text)))
+        }
+        return [string]::Join("`r`n---`r`n", $texts.ToArray())
     }
 
     function global:Add-HudSnippetRows {
@@ -577,7 +590,7 @@ function Show-HudWindow {
         $snippetIndex = 0
         foreach ($snippet in $Snippets) {
             $snippetBorder = [System.Windows.Controls.Border]::new()
-            $snippetBorder.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#E5E7EB')
+            $snippetBorder.Background = $script:HudBrushSnippetBackground
             $snippetBorder.CornerRadius = [System.Windows.CornerRadius]::new(4)
             $snippetBorder.Padding = [System.Windows.Thickness]::new(10, 5, 10, 5)
             $bottomMargin = if ($snippetIndex -lt ($Snippets.Count - 1)) { 8 } else { 0 }
@@ -590,27 +603,20 @@ function Show-HudWindow {
             $snippetGrid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
             $snippetGrid.ColumnDefinitions[1].Width = [System.Windows.GridLength]::Auto
 
-            $snippetTextBox = [System.Windows.Controls.TextBox]::new()
-            $snippetTextBox.Text = [string]$snippet.text
-            $snippetTextBox.FontFamily = $script:HudFavoriteFontFamily
-            $snippetTextBox.FontSize = $script:HudFavoriteTitleFontSize
-            $snippetTextBox.FontWeight = [System.Windows.FontWeights]::SemiBold
-            $snippetTextBox.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#111827')
-            $snippetTextBox.Background = [System.Windows.Media.Brushes]::Transparent
-            $snippetTextBox.BorderThickness = [System.Windows.Thickness]::new(0)
-            $snippetTextBox.Padding = [System.Windows.Thickness]::new(0, 1, 0, 1)
+            $snippetTextBox = New-HudReadOnlyTextBox `
+                -Text ([string]$snippet.text) `
+                -FontFamily $script:HudFavoriteFontFamily `
+                -FontSize $script:HudFavoriteTitleFontSize `
+                -Foreground $script:HudBrushTextStrong `
+                -FontWeight ([System.Windows.FontWeights]::SemiBold) `
+                -Padding ([System.Windows.Thickness]::new(0, 1, 0, 1)) `
+                -MaxHeight $script:HudSnippetMaxHeight `
+                -VerticalScrollBarVisibility ([System.Windows.Controls.ScrollBarVisibility]::Hidden)
             $snippetTextBox.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Stretch
-            $snippetTextBox.IsReadOnly = $true
-            $snippetTextBox.IsReadOnlyCaretVisible = $false
-            $snippetTextBox.AcceptsReturn = $true
-            $snippetTextBox.TextWrapping = [System.Windows.TextWrapping]::Wrap
-            $snippetTextBox.MaxHeight = $script:HudSnippetMaxHeight
-            $snippetTextBox.VerticalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Hidden
-            $snippetTextBox.HorizontalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Disabled
             [System.Windows.Controls.Grid]::SetColumn($snippetTextBox, 0)
             [void]$snippetGrid.Children.Add($snippetTextBox)
 
-            $lineCount = (([string]$snippet.text) -split "(`r`n|`n|`r)").Count
+            $lineCount = Get-HudTextLineCount -Text ([string]$snippet.text)
             $copyLabel = if ($lineCount -le 3) {
                 'cp'
             }
@@ -629,23 +635,19 @@ function Show-HudWindow {
             else {
                 "n`ng"
             }
-            $snippetCopyButton = [System.Windows.Controls.Button]::new()
-            $snippetCopyButton.Content = $copyLabel
+            $snippetCopyButton = New-HudFlatButton `
+                -Content $copyLabel `
+                -Width 22 `
+                -MinHeight 20 `
+                -FontFamily $script:HudFavoriteFontFamily `
+                -FontSize $script:HudFavoriteFilterFontSize `
+                -Foreground $script:HudBrushTextNormal `
+                -Background $script:HudBrushSnippetCopyBackground
             $snippetCopyButton.Tag = [pscustomobject]@{
                 Copy = $copyLabel
                 Ok = $copyOkLabel
                 Ng = $copyNgLabel
             }
-            $snippetCopyButton.Width = 22
-            $snippetCopyButton.MinHeight = 20
-            $snippetCopyButton.Padding = [System.Windows.Thickness]::new(0)
-            $snippetCopyButton.BorderThickness = [System.Windows.Thickness]::new(0)
-            $snippetCopyButtonBackground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#D1D5DB')
-            $snippetCopyButtonBackground.Opacity = 0.85
-            $snippetCopyButton.Background = $snippetCopyButtonBackground
-            $snippetCopyButton.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#374151')
-            $snippetCopyButton.FontFamily = $script:HudFavoriteFontFamily
-            $snippetCopyButton.FontSize = $script:HudFavoriteFilterFontSize
             $snippetCopyButton.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Stretch
             $snippetCopyButton.VerticalAlignment = [System.Windows.VerticalAlignment]::Stretch
             $snippetCopyButton.Margin = [System.Windows.Thickness]::new(8, -5, -10, -5)
@@ -713,13 +715,13 @@ function Show-HudWindow {
         }
 
         $script:HudFavoriteButton.Visibility = [System.Windows.Visibility]::Visible
-        if ($Feature.PSObject.Properties.Name -contains 'favorite' -and [bool]$Feature.favorite) {
+        if ((Test-HudProperty -Target $Feature -Name 'favorite') -and [bool]$Feature.favorite) {
             $script:HudFavoriteButton.Content = '★'
-            $script:HudFavoriteButton.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#F59E0B')
+            $script:HudFavoriteButton.Foreground = $script:HudBrushFavoriteStar
         }
         else {
             $script:HudFavoriteButton.Content = '☆'
-            $script:HudFavoriteButton.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#6B7280')
+            $script:HudFavoriteButton.Foreground = $script:HudBrushTextMuted
         }
     }
 
@@ -836,6 +838,33 @@ function Show-HudWindow {
         }
     }
 
+    function Save-EditorItems {
+        Save-HudJson -Path $script:DefaultHudDataPath -Items @($State.Items)
+        Set-EditorDirty $false
+        Set-EditorStatus "Saved: $script:DefaultHudDataPath"
+    }
+
+    function New-EditorDefaultFeature {
+        return [pscustomobject]@{
+            title = 'New feature（新しい機能）'
+            description = '説明を入力してください。'
+        }
+    }
+
+    function New-EditorDefaultGroup {
+        return [pscustomobject]@{
+            name = 'NewGroup'
+            features = @(New-EditorDefaultFeature)
+        }
+    }
+
+    function Set-EditorChangedStatus {
+        param([Parameter(Mandatory = $true)][string]$Text)
+
+        Set-EditorDirty $true
+        Set-EditorStatus $Text
+    }
+
     function Get-EditorSelectedCategory {
         return $editorCategoryList.SelectedItem
     }
@@ -864,9 +893,9 @@ function Show-HudWindow {
 
         $editorTitleBox.Text = [string]$feature.title
         $snippets = @(Get-HudFeatureSnippets -Feature $feature)
-        $editorShortcutBox.Text = (($snippets | ForEach-Object { Format-HudSnippetTextForEditor -Text ([string]$_.text) }) -join "`r`n---`r`n")
-        $editorCopyableBox.IsChecked = ($feature.PSObject.Properties.Name -contains 'copyable' -and [bool]$feature.copyable)
-        $editorFavoriteBox.IsChecked = ($feature.PSObject.Properties.Name -contains 'favorite' -and [bool]$feature.favorite)
+        $editorShortcutBox.Text = Join-HudSnippetTextsForEditor -Snippets $snippets
+        $editorCopyableBox.IsChecked = (Test-HudProperty -Target $feature -Name 'copyable') -and [bool]$feature.copyable
+        $editorFavoriteBox.IsChecked = (Test-HudProperty -Target $feature -Name 'favorite') -and [bool]$feature.favorite
         $editorDescriptionBox.Text = [string]$feature.description
         $script:HudEditorRefreshing = $false
         Clear-EditorDirtyMarkers
@@ -875,19 +904,9 @@ function Show-HudWindow {
     function Refresh-EditorFeatureList {
         $selected = Get-EditorSelectedFeature
         $script:HudEditorRefreshing = $true
-        $editorFeatureList.Items.Clear()
         $group = Get-EditorSelectedGroup
-        if ($null -ne $group) {
-            foreach ($feature in @($group.features)) {
-                [void]$editorFeatureList.Items.Add($feature)
-            }
-        }
-        if ($null -ne $selected -and @($group.features) -contains $selected) {
-            $editorFeatureList.SelectedItem = $selected
-        }
-        elseif ($editorFeatureList.Items.Count -gt 0) {
-            $editorFeatureList.SelectedIndex = 0
-        }
+        $features = if ($null -ne $group) { @($group.features) } else { @() }
+        Set-HudListBoxItems -ListBox $editorFeatureList -Items $features -Selected $selected
         $script:HudEditorRefreshing = $false
         Refresh-EditorFeatureFields
     }
@@ -895,20 +914,10 @@ function Show-HudWindow {
     function Refresh-EditorGroupList {
         $selected = Get-EditorSelectedGroup
         $script:HudEditorRefreshing = $true
-        $editorGroupList.Items.Clear()
         $category = Get-EditorSelectedCategory
         $editorCategoryNameBox.Text = if ($null -ne $category) { [string]$category.name } else { '' }
-        if ($null -ne $category) {
-            foreach ($group in @($category.groups)) {
-                [void]$editorGroupList.Items.Add($group)
-            }
-        }
-        if ($null -ne $selected -and @($category.groups) -contains $selected) {
-            $editorGroupList.SelectedItem = $selected
-        }
-        elseif ($editorGroupList.Items.Count -gt 0) {
-            $editorGroupList.SelectedIndex = 0
-        }
+        $groups = if ($null -ne $category) { @($category.groups) } else { @() }
+        Set-HudListBoxItems -ListBox $editorGroupList -Items $groups -Selected $selected
         $group = Get-EditorSelectedGroup
         $editorGroupNameBox.Text = if ($null -ne $group) { [string]$group.name } else { '' }
         $script:HudEditorRefreshing = $false
@@ -918,16 +927,7 @@ function Show-HudWindow {
     function Refresh-EditorCategoryList {
         $selected = Get-EditorSelectedCategory
         $script:HudEditorRefreshing = $true
-        $editorCategoryList.Items.Clear()
-        foreach ($category in @($State.Items)) {
-            [void]$editorCategoryList.Items.Add($category)
-        }
-        if ($null -ne $selected -and @($State.Items) -contains $selected) {
-            $editorCategoryList.SelectedItem = $selected
-        }
-        elseif ($editorCategoryList.Items.Count -gt 0) {
-            $editorCategoryList.SelectedIndex = 0
-        }
+        Set-HudListBoxItems -ListBox $editorCategoryList -Items @($State.Items) -Selected $selected
         $script:HudEditorRefreshing = $false
         Refresh-EditorGroupList
     }
@@ -963,9 +963,7 @@ function Show-HudWindow {
         if ([bool]$editorFavoriteBox.IsChecked) {
             Set-HudProperty -Target $feature -Name 'favorite' -Value $true
         }
-        elseif ($feature.PSObject.Properties.Name -contains 'favorite') {
-            $feature.PSObject.Properties.Remove('favorite')
-        }
+        else { Remove-HudProperty -Target $feature -Name 'favorite' }
         if ($DirtyFields -contains 'Title') {
             Set-EditorLabelText -Label $editorTitleLabel -Text 'Title:' -Dirty $false
         }
@@ -1004,9 +1002,7 @@ function Show-HudWindow {
         if ([bool]$editorFavoriteBox.IsChecked) {
             Set-HudProperty -Target $feature -Name 'favorite' -Value $true
         }
-        elseif ($feature.PSObject.Properties.Name -contains 'favorite') {
-            $feature.PSObject.Properties.Remove('favorite')
-        }
+        else { Remove-HudProperty -Target $feature -Name 'favorite' }
     }
 
     function New-EditorWindow {
@@ -1208,16 +1204,12 @@ function Show-HudWindow {
         $editorDescriptionBox.Add_LostFocus({ Apply-EditorFeatureFields -DirtyFields @('Description') })
         $editorCopyableBox.Add_Click({
             Apply-EditorFeatureFields -DirtyFields @('Shortcut')
-            Save-HudJson -Path $script:DefaultHudDataPath -Items @($State.Items)
-            Set-EditorDirty $false
-            Set-EditorStatus "Saved: $script:DefaultHudDataPath"
+            Save-EditorItems
             Refresh-HudFavoritePanelsFromEvent
         })
         $editorFavoriteBox.Add_Click({
             Apply-EditorFeatureFields -DirtyFields @()
-            Save-HudJson -Path $script:DefaultHudDataPath -Items @($State.Items)
-            Set-EditorDirty $false
-            Set-EditorStatus "Saved: $script:DefaultHudDataPath"
+            Save-EditorItems
             Refresh-HudFavoritePanelsFromEvent
         })
         $editorCategoryNameBox.Add_TextChanged({
@@ -1262,74 +1254,53 @@ function Show-HudWindow {
         $editorAddCategoryButton.Add_Click({
             $newCategory = [pscustomobject]@{
                 name = 'NewCategory'
-                groups = @([pscustomobject]@{
-                    name = 'NewGroup'
-                    features = @([pscustomobject]@{
-                        title = 'New feature（新しい機能）'
-                        description = '説明を入力してください。'
-                    })
-                })
+                groups = @(New-EditorDefaultGroup)
             }
             $State.Items = @($State.Items) + $newCategory
             Refresh-EditorCategoryList
             $editorCategoryList.SelectedIndex = $editorCategoryList.Items.Count - 1
-            Set-EditorDirty $true
-            Set-EditorStatus 'Added category.'
+            Set-EditorChangedStatus 'Added category.'
         })
         $editorDeleteCategoryButton.Add_Click({
             if ($editorCategoryList.SelectedIndex -lt 0) { return }
             $category = Get-EditorSelectedCategory
-            $State.Items = @($State.Items | Where-Object { $_ -ne $category })
+            $State.Items = Remove-HudArrayItem -Items @($State.Items) -RemoveItem $category
             Refresh-EditorCategoryList
-            Set-EditorDirty $true
-            Set-EditorStatus 'Deleted category.'
+            Set-EditorChangedStatus 'Deleted category.'
         })
         $editorAddGroupButton.Add_Click({
             $category = Get-EditorSelectedCategory
             if ($null -eq $category) { return }
-            $newGroup = [pscustomobject]@{
-                name = 'NewGroup'
-                features = @([pscustomobject]@{
-                    title = 'New feature（新しい機能）'
-                    description = '説明を入力してください。'
-                })
-            }
+            $newGroup = New-EditorDefaultGroup
             Set-HudProperty -Target $category -Name 'groups' -Value (@($category.groups) + $newGroup)
             Refresh-EditorGroupList
             $editorGroupList.SelectedIndex = $editorGroupList.Items.Count - 1
-            Set-EditorDirty $true
-            Set-EditorStatus 'Added group.'
+            Set-EditorChangedStatus 'Added group.'
         })
         $editorDeleteGroupButton.Add_Click({
             $category = Get-EditorSelectedCategory
             $group = Get-EditorSelectedGroup
             if ($null -eq $category -or $null -eq $group) { return }
-            Set-HudProperty -Target $category -Name 'groups' -Value @(@($category.groups) | Where-Object { $_ -ne $group })
+            Set-HudProperty -Target $category -Name 'groups' -Value (Remove-HudArrayItem -Items @($category.groups) -RemoveItem $group)
             Refresh-EditorGroupList
-            Set-EditorDirty $true
-            Set-EditorStatus 'Deleted group.'
+            Set-EditorChangedStatus 'Deleted group.'
         })
         $editorAddFeatureButton.Add_Click({
             $group = Get-EditorSelectedGroup
             if ($null -eq $group) { return }
-            $newFeature = [pscustomobject]@{
-                title = 'New feature（新しい機能）'
-                description = '説明を入力してください。'
-            }
+            $newFeature = New-EditorDefaultFeature
             Set-HudProperty -Target $group -Name 'features' -Value (@($group.features) + $newFeature)
             Refresh-EditorFeatureList
             $editorFeatureList.SelectedIndex = $editorFeatureList.Items.Count - 1
-            Set-EditorDirty $true
-            Set-EditorStatus 'Added feature.'
+            Set-EditorChangedStatus 'Added feature.'
         })
         $editorDeleteFeatureButton.Add_Click({
             $group = Get-EditorSelectedGroup
             $feature = Get-EditorSelectedFeature
             if ($null -eq $group -or $null -eq $feature) { return }
-            Set-HudProperty -Target $group -Name 'features' -Value @(@($group.features) | Where-Object { $_ -ne $feature })
+            Set-HudProperty -Target $group -Name 'features' -Value (Remove-HudArrayItem -Items @($group.features) -RemoveItem $feature)
             Refresh-EditorFeatureList
-            Set-EditorDirty $true
-            Set-EditorStatus 'Deleted feature.'
+            Set-EditorChangedStatus 'Deleted feature.'
         })
         $editorSaveButton.Add_Click({
             Save-EditorJson
@@ -1339,9 +1310,7 @@ function Show-HudWindow {
 
     function Save-EditorJson {
         Save-EditorCurrentFields
-        Save-HudJson -Path $script:DefaultHudDataPath -Items @($State.Items)
-        Set-EditorDirty $false
-        Set-EditorStatus "Saved: $script:DefaultHudDataPath"
+        Save-EditorItems
     }
 
     function Ensure-EditorWindow {
@@ -1492,10 +1461,18 @@ function Show-HudWindow {
 
         $current = if (@($script:HudRecentHistory).Count -gt 0) { $script:HudRecentHistory[0] } else { $null }
         if ($null -eq $current -or $current.Feature -ne $Feature) {
-            $script:HudRecentHistory = @($entry) + @($script:HudRecentHistory | Where-Object { $_.Feature -ne $Feature })
-            if ($script:HudRecentHistory.Count -gt $script:HudRecentHistoryMax) {
-                $script:HudRecentHistory = @($script:HudRecentHistory | Select-Object -First $script:HudRecentHistoryMax)
+            $history = [System.Collections.Generic.List[object]]::new()
+            $history.Add($entry)
+            foreach ($historyEntry in @($script:HudRecentHistory)) {
+                if ($historyEntry.Feature -eq $Feature) {
+                    continue
+                }
+                if ($history.Count -ge $script:HudRecentHistoryMax) {
+                    break
+                }
+                $history.Add($historyEntry)
             }
+            $script:HudRecentHistory = $history.ToArray()
         }
 
         $script:HudRecentHistoryIndex = 0
@@ -1535,13 +1512,13 @@ function Show-HudWindow {
         }
 
         $favoriteButton.Visibility = [System.Windows.Visibility]::Visible
-        if ($Feature.PSObject.Properties.Name -contains 'favorite' -and [bool]$Feature.favorite) {
+        if ((Test-HudProperty -Target $Feature -Name 'favorite') -and [bool]$Feature.favorite) {
             $favoriteButton.Content = '★'
-            $favoriteButton.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#F59E0B')
+            $favoriteButton.Foreground = $script:HudBrushFavoriteStar
         }
         else {
             $favoriteButton.Content = '☆'
-            $favoriteButton.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#6B7280')
+            $favoriteButton.Foreground = $script:HudBrushTextMuted
         }
     }
 
@@ -1553,7 +1530,7 @@ function Show-HudWindow {
         $stepY = $script:HudFavoritePanelHeight + $gap
         $baseX = $script:HudFavoritePanelX
         $baseY = $script:HudFavoritePanelY
-        $slots = @()
+        $slots = [System.Collections.Generic.List[object]]::new()
 
         $rowOffsets = @(0, -1, 1, -2, 2, -3, 3)
         foreach ($rowOffset in $rowOffsets) {
@@ -1567,7 +1544,7 @@ function Show-HudWindow {
                 if ($left -lt 0) {
                     break
                 }
-                $slots += [System.Windows.Thickness]::new($left, $top, 0, 0)
+                $slots.Add([System.Windows.Thickness]::new($left, $top, 0, 0))
             }
 
             for ($column = 0; $column -lt 20; $column++) {
@@ -1575,7 +1552,7 @@ function Show-HudWindow {
                 if (($left + $script:HudFavoritePanelWidth) -gt $script:HudFavoriteVisibleWidth) {
                     break
                 }
-                $slots += [System.Windows.Thickness]::new($left, $top, 0, 0)
+                $slots.Add([System.Windows.Thickness]::new($left, $top, 0, 0))
             }
         }
 
@@ -1596,7 +1573,7 @@ function Show-HudWindow {
 
     function global:Refresh-HudFavoritePanelsFromEvent {
         if ($null -eq $script:HudRoot) {
-            $script:HudFavoritePanels = @()
+            $script:HudFavoritePanels = [System.Collections.Generic.List[object]]::new()
             return
         }
 
@@ -1614,18 +1591,18 @@ function Show-HudWindow {
             }
             [void]$script:HudRoot.Children.Remove($favoritePanel)
         }
-        $script:HudFavoritePanels = @()
+        $script:HudFavoritePanels = [System.Collections.Generic.List[object]]::new()
 
-        $entries = @()
+        $entries = [System.Collections.Generic.List[object]]::new()
         foreach ($category in @($script:HudState.Items)) {
             foreach ($group in @($category.groups)) {
                 foreach ($feature in @($group.features)) {
-                    if ($feature.PSObject.Properties.Name -contains 'favorite' -and [bool]$feature.favorite) {
-                        $entries += [pscustomobject]@{
+                    if ((Test-HudProperty -Target $feature -Name 'favorite') -and [bool]$feature.favorite) {
+                        $entries.Add([pscustomobject]@{
                             CategoryName = $category.name
                             GroupName = $group.name
                             Feature = $feature
-                        }
+                        })
                     }
                 }
             }
@@ -1648,8 +1625,8 @@ function Show-HudWindow {
                 $defaultMargin = Get-HudFavoriteDefaultMarginFromEvent -Index $index
                 $border.Margin = Get-HudClampedPanelMargin -Target $border -Left $defaultMargin.Left -Top $defaultMargin.Top
             }
-            $border.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#F6F8FA')
-            $border.BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#B8C0CC')
+            $border.Background = $script:HudBrushPanelBackground
+            $border.BorderBrush = $script:HudBrushPanelBorder
             $border.BorderThickness = [System.Windows.Thickness]::new(1)
             $border.Padding = [System.Windows.Thickness]::new(12, 10, 12, 8)
 
@@ -1674,7 +1651,7 @@ function Show-HudWindow {
             $pathText.FontFamily = $script:HudFavoriteFontFamily
             $pathText.FontSize = $script:HudFavoriteDetailTitleFontSize
             $pathText.FontWeight = [System.Windows.FontWeights]::SemiBold
-            $pathText.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#1F2937')
+            $pathText.Foreground = $script:HudBrushTextPath
             $pathText.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $border -Event $event }.GetNewClosure())
             [System.Windows.Controls.Grid]::SetRow($pathText, 0)
             [System.Windows.Controls.Grid]::SetColumn($pathText, 0)
@@ -1685,7 +1662,7 @@ function Show-HudWindow {
             $favoriteDragHandle.Width = 28
             $favoriteDragHandle.Height = 20
             $favoriteDragHandle.TextAlignment = [System.Windows.TextAlignment]::Center
-            $favoriteDragHandle.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#9CA3AF')
+            $favoriteDragHandle.Foreground = $script:HudBrushTextSubtle
             $favoriteDragHandle.FontFamily = $script:HudFavoriteFontFamily
             $favoriteDragHandle.FontSize = $script:HudFavoriteFilterFontSize
             $favoriteDragHandle.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $border -Event $event }.GetNewClosure())
@@ -1693,21 +1670,18 @@ function Show-HudWindow {
             [System.Windows.Controls.Grid]::SetColumn($favoriteDragHandle, 1)
             [void]$grid.Children.Add($favoriteDragHandle)
 
-            $unfavoriteButton = [System.Windows.Controls.Button]::new()
-            $unfavoriteButton.Content = '★'
-            $unfavoriteButton.Width = 24
-            $unfavoriteButton.Height = 20
-            $unfavoriteButton.Padding = [System.Windows.Thickness]::new(0)
-            $unfavoriteButton.BorderThickness = [System.Windows.Thickness]::new(0)
-            $unfavoriteButton.Background = [System.Windows.Media.Brushes]::Transparent
-            $unfavoriteButton.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#F59E0B')
-            $unfavoriteButton.FontFamily = $script:HudFavoriteFontFamily
-            $unfavoriteButton.FontSize = $script:HudFavoriteTitleFontSize
+            $unfavoriteButton = New-HudFlatButton `
+                -Content '★' `
+                -Width 24 `
+                -Height 20 `
+                -FontFamily $script:HudFavoriteFontFamily `
+                -FontSize $script:HudFavoriteTitleFontSize `
+                -Foreground $script:HudBrushFavoriteStar
             $unfavoriteButton.HorizontalAlignment = [System.Windows.HorizontalAlignment]::Right
             $unfavoriteButton.VerticalAlignment = [System.Windows.VerticalAlignment]::Top
             $unfavoriteButton.Add_Click({
                 param($sender, $event)
-                $entry.Feature.PSObject.Properties.Remove('favorite')
+                Remove-HudProperty -Target $entry.Feature -Name 'favorite'
                 Save-HudJsonFromEvent
                 if ($script:HudState.SelectedFeature -eq $entry.Feature) {
                     Set-FavoriteButtonStateFromEvent -Feature $entry.Feature
@@ -1742,7 +1716,7 @@ function Show-HudWindow {
             $titleText.FontFamily = $script:HudFavoriteFontFamily
             $titleText.FontSize = $script:HudFavoriteFeatureTitleFontSize
             $titleText.FontWeight = [System.Windows.FontWeights]::SemiBold
-            $titleText.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#111827')
+            $titleText.Foreground = $script:HudBrushTextStrong
             $titleText.TextWrapping = [System.Windows.TextWrapping]::Wrap
             $titleDragArea.Child = $titleText
             [void]$favoriteBody.Children.Add($titleDragArea)
@@ -1757,7 +1731,7 @@ function Show-HudWindow {
             $shortcutLabel.Text = 'Snippets:'
             $shortcutLabel.FontFamily = $script:HudFavoriteFontFamily
             $shortcutLabel.FontSize = $script:HudFavoriteFilterFontSize
-            $shortcutLabel.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#6B7280')
+            $shortcutLabel.Foreground = $script:HudBrushTextMuted
             $shortcutLabel.Margin = [System.Windows.Thickness]::new(0, 0, 0, 4)
             [System.Windows.Controls.Grid]::SetRow($shortcutLabel, 0)
             [void]$shortcutArea.Children.Add($shortcutLabel)
@@ -1786,25 +1760,16 @@ function Show-HudWindow {
             $descriptionLabel.Text = 'Description:'
             $descriptionLabel.FontFamily = $script:HudFavoriteFontFamily
             $descriptionLabel.FontSize = $script:HudFavoriteFilterFontSize
-            $descriptionLabel.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#6B7280')
+            $descriptionLabel.Foreground = $script:HudBrushTextMuted
             $descriptionLabel.Margin = [System.Windows.Thickness]::new(0, 0, 0, 4)
             [System.Windows.Controls.Grid]::SetRow($descriptionLabel, 0)
             [void]$descriptionGrid.Children.Add($descriptionLabel)
 
-            $descriptionTextBox = [System.Windows.Controls.TextBox]::new()
-            $descriptionTextBox.Text = [string]$entry.Feature.description
-            $descriptionTextBox.FontFamily = $script:HudFavoriteFontFamily
-            $descriptionTextBox.FontSize = $script:HudFavoriteDetailFontSize
-            $descriptionTextBox.Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString('#374151')
-            $descriptionTextBox.Background = [System.Windows.Media.Brushes]::Transparent
-            $descriptionTextBox.BorderThickness = [System.Windows.Thickness]::new(0)
-            $descriptionTextBox.Padding = [System.Windows.Thickness]::new(0)
-            $descriptionTextBox.IsReadOnly = $true
-            $descriptionTextBox.IsReadOnlyCaretVisible = $false
-            $descriptionTextBox.TextWrapping = [System.Windows.TextWrapping]::Wrap
-            $descriptionTextBox.AcceptsReturn = $true
-            $descriptionTextBox.VerticalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Disabled
-            $descriptionTextBox.HorizontalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Disabled
+            $descriptionTextBox = New-HudReadOnlyTextBox `
+                -Text ([string]$entry.Feature.description) `
+                -FontFamily $script:HudFavoriteFontFamily `
+                -FontSize $script:HudFavoriteDetailFontSize `
+                -Foreground $script:HudBrushTextNormal
             [System.Windows.Controls.Grid]::SetRow($descriptionTextBox, 1)
             [void]$descriptionGrid.Children.Add($descriptionTextBox)
             [void]$favoriteBody.Children.Add($descriptionGrid)
@@ -1813,7 +1778,7 @@ function Show-HudWindow {
             $border.Add_MouseMove({ param($sender, $event) Move-HudPanelDrag -Event $event }.GetNewClosure())
             $border.Add_MouseLeftButtonUp({ param($sender, $event) Stop-HudPanelDrag -Event $event }.GetNewClosure())
             [void]$script:HudRoot.Children.Add($border)
-            $script:HudFavoritePanels += $border
+            $script:HudFavoritePanels.Add($border)
             $index++
         }
     }
@@ -1824,8 +1789,8 @@ function Show-HudWindow {
         }
 
         $feature = $script:HudState.SelectedFeature
-        if ($feature.PSObject.Properties.Name -contains 'favorite' -and [bool]$feature.favorite) {
-            $feature.PSObject.Properties.Remove('favorite')
+        if ((Test-HudProperty -Target $feature -Name 'favorite') -and [bool]$feature.favorite) {
+            Remove-HudProperty -Target $feature -Name 'favorite'
         }
         else {
             Set-HudPropertyFromEvent -Target $feature -Name 'favorite' -Value $true
@@ -1867,8 +1832,6 @@ function Show-HudWindow {
         }
         $list.Items.Clear()
 
-        $candidates = Get-HudCandidates -State $State
-
         if ($State.Level -eq 'Detail') {
             $list.Visibility = [System.Windows.Visibility]::Collapsed
             $detail.Visibility = [System.Windows.Visibility]::Collapsed
@@ -1892,6 +1855,7 @@ function Show-HudWindow {
             $list.Visibility = [System.Windows.Visibility]::Visible
             $detail.Visibility = [System.Windows.Visibility]::Visible
             $detailPanel.Visibility = [System.Windows.Visibility]::Collapsed
+            $candidates = Get-HudCandidates -State $State
             foreach ($candidate in $candidates) {
                 [void]$list.Items.Add($candidate.Label)
             }

@@ -20,32 +20,43 @@ function Get-HudCandidates {
         [pscustomobject]$State
     )
 
+    $candidates = [System.Collections.Generic.List[object]]::new()
+    $filter = [string]$State.TextFilter
+
     switch ($State.Level) {
         'Root' {
-            $items = $State.Items
-            if ($State.TextFilter) {
-                $items = @($items | Where-Object { $_.name.StartsWith($State.TextFilter, [System.StringComparison]::OrdinalIgnoreCase) })
+            foreach ($item in @($State.Items)) {
+                $name = [string]$item.name
+                if ($filter -and -not $name.StartsWith($filter, [System.StringComparison]::OrdinalIgnoreCase)) {
+                    continue
+                }
+                $candidates.Add([pscustomobject]@{ Label = $name; Value = $item })
             }
-            return @($items | ForEach-Object { [pscustomobject]@{ Label = $_.name; Value = $_ } })
         }
         'Group' {
-            $items = @($State.SelectedCategory.groups)
-            if ($State.TextFilter) {
-                $items = @($items | Where-Object { $_.name.StartsWith($State.TextFilter, [System.StringComparison]::OrdinalIgnoreCase) })
+            foreach ($item in @($State.SelectedCategory.groups)) {
+                $name = [string]$item.name
+                if ($filter -and -not $name.StartsWith($filter, [System.StringComparison]::OrdinalIgnoreCase)) {
+                    continue
+                }
+                $candidates.Add([pscustomobject]@{ Label = $name; Value = $item })
             }
-            return @($items | ForEach-Object { [pscustomobject]@{ Label = $_.name; Value = $_ } })
         }
         'Feature' {
-            $items = @($State.SelectedGroup.features)
-            if ($State.TextFilter) {
-                $items = @($items | Where-Object { Test-HudInitialMatch -Text $_.title -Filter $State.TextFilter })
+            foreach ($item in @($State.SelectedGroup.features)) {
+                $title = [string]$item.title
+                if ($filter -and -not (Test-HudInitialMatch -Text $title -Filter $filter)) {
+                    continue
+                }
+                $candidates.Add([pscustomobject]@{ Label = $title; Value = $item })
             }
-            return @($items | ForEach-Object { [pscustomobject]@{ Label = $_.title; Value = $_ } })
         }
         'Detail' {
             return @([pscustomobject]@{ Label = $State.SelectedFeature.title; Value = $State.SelectedFeature })
         }
     }
+
+    return $candidates.ToArray()
 }
 
 function Test-HudInitialMatch {
@@ -67,9 +78,23 @@ function Test-HudInitialMatch {
         return $true
     }
 
-    $initials = (([regex]::Matches($Text, '\b[0-9A-Za-z]') | ForEach-Object { $_.Value }) -join '')
+    $initials = [System.Text.StringBuilder]::new()
+    $previousIsAsciiWord = $false
+    foreach ($char in $Text.ToCharArray()) {
+        $code = [int][char]$char
+        $isAsciiWord = (
+            ($code -ge 48 -and $code -le 57) -or
+            ($code -ge 65 -and $code -le 90) -or
+            ($code -ge 97 -and $code -le 122)
+        )
 
-    return $initials.StartsWith($Filter, [System.StringComparison]::OrdinalIgnoreCase)
+        if ($isAsciiWord -and -not $previousIsAsciiWord) {
+            [void]$initials.Append($char)
+        }
+        $previousIsAsciiWord = $isAsciiWord
+    }
+
+    return $initials.ToString().StartsWith($Filter, [System.StringComparison]::OrdinalIgnoreCase)
 }
 
 function Reset-HudFilter {
