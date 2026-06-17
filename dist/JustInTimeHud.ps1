@@ -1,6 +1,6 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: 9221caf
+# Source commit: da6ddeb
 
 $script:HudSingleFile = $true
 
@@ -187,11 +187,27 @@ using System.Runtime.InteropServices;
 
 public static class HudNativeMethods
 {
+    public const int MDT_EFFECTIVE_DPI = 0;
+    public const int MONITOR_DEFAULTTONEAREST = 2;
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct POINT
+    {
+        public int x;
+        public int y;
+    }
+
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 
     [DllImport("user32.dll")]
     public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr MonitorFromPoint(POINT pt, uint dwFlags);
+
+    [DllImport("shcore.dll")]
+    public static extern int GetDpiForMonitor(IntPtr hmonitor, int dpiType, out uint dpiX, out uint dpiY);
 
 }
 "@
@@ -669,6 +685,38 @@ function Set-HudListBoxItems {
     }
 }
 
+function Get-HudScreenDipBounds {
+    param([Parameter(Mandatory = $true)][System.Drawing.Rectangle]$Bounds)
+
+    $dpiX = [uint32]96
+    $dpiY = [uint32]96
+    try {
+        $point = [HudNativeMethods+POINT]::new()
+        $point.x = $Bounds.Left
+        $point.y = $Bounds.Top
+        $monitor = [HudNativeMethods]::MonitorFromPoint($point, [HudNativeMethods]::MONITOR_DEFAULTTONEAREST)
+        if ($monitor -ne [IntPtr]::Zero) {
+            [void][HudNativeMethods]::GetDpiForMonitor($monitor, [HudNativeMethods]::MDT_EFFECTIVE_DPI, [ref]$dpiX, [ref]$dpiY)
+        }
+    }
+    catch {
+        $dpiX = [uint32]96
+        $dpiY = [uint32]96
+    }
+
+    $scaleX = [Math]::Max(0.1, [double]$dpiX / 96.0)
+    $scaleY = [Math]::Max(0.1, [double]$dpiY / 96.0)
+
+    return [pscustomobject]@{
+        Left = [double]$Bounds.Left / $scaleX
+        Top = [double]$Bounds.Top / $scaleY
+        Width = [double]$Bounds.Width / $scaleX
+        Height = [double]$Bounds.Height / $scaleY
+        ScaleX = $scaleX
+        ScaleY = $scaleY
+    }
+}
+
 #endregion src/UI/HudControls.ps1
 
 #region src/UI/MainWindow.ps1
@@ -687,10 +735,11 @@ function Show-HudWindow {
         $displayMonitorIndex = 0
     }
     $screen = $screens[$displayMonitorIndex].Bounds
-    $visibleLeft = $screen.Left
-    $visibleTop = $screen.Top
-    $visibleWidth = $screen.Width
-    $visibleHeight = $screen.Height
+    $screenDipBounds = Get-HudScreenDipBounds -Bounds $screen
+    $visibleLeft = $screenDipBounds.Left
+    $visibleTop = $screenDipBounds.Top
+    $visibleWidth = $screenDipBounds.Width
+    $visibleHeight = $screenDipBounds.Height
     $panelX = [int]$Settings.panelX
     $panelY = [int]$Settings.panelY
     $recentPanelX = [int]$Settings.recentPanelX
@@ -704,8 +753,8 @@ function Show-HudWindow {
     $showRecentPanel = [bool]$Settings.showRecentPanel
     $editorWidth = 920
     $editorHeight = 620
-    $editorLeft = $visibleLeft + [Math]::Max(0, [int](($screen.Width - $editorWidth) / 2))
-    $editorTop = $visibleTop + [Math]::Max(0, [int](($screen.Height - $editorHeight) / 2))
+    $editorLeft = $visibleLeft + [Math]::Max(0, [int](($visibleWidth - $editorWidth) / 2))
+    $editorTop = $visibleTop + [Math]::Max(0, [int](($visibleHeight - $editorHeight) / 2))
     $fontFamily = [string]$Settings.fontFamily
     $titleFontSize = [double]$Settings.titleFontSize
     $detailTitleFontSize = [double]$Settings.detailTitleFontSize

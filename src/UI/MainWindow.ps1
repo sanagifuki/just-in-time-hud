@@ -13,10 +13,11 @@ function Show-HudWindow {
         $displayMonitorIndex = 0
     }
     $screen = $screens[$displayMonitorIndex].Bounds
-    $visibleLeft = $screen.Left
-    $visibleTop = $screen.Top
-    $visibleWidth = $screen.Width
-    $visibleHeight = $screen.Height
+    $screenDipBounds = Get-HudScreenDipBounds -Bounds $screen
+    $visibleLeft = $screenDipBounds.Left
+    $visibleTop = $screenDipBounds.Top
+    $visibleWidth = $screenDipBounds.Width
+    $visibleHeight = $screenDipBounds.Height
     $panelX = [int]$Settings.panelX
     $panelY = [int]$Settings.panelY
     $recentPanelX = [int]$Settings.recentPanelX
@@ -30,8 +31,8 @@ function Show-HudWindow {
     $showRecentPanel = [bool]$Settings.showRecentPanel
     $editorWidth = 920
     $editorHeight = 620
-    $editorLeft = $visibleLeft + [Math]::Max(0, [int](($screen.Width - $editorWidth) / 2))
-    $editorTop = $visibleTop + [Math]::Max(0, [int](($screen.Height - $editorHeight) / 2))
+    $editorLeft = $visibleLeft + [Math]::Max(0, [int](($visibleWidth - $editorWidth) / 2))
+    $editorTop = $visibleTop + [Math]::Max(0, [int](($visibleHeight - $editorHeight) / 2))
     $fontFamily = [string]$Settings.fontFamily
     $titleFontSize = [double]$Settings.titleFontSize
     $detailTitleFontSize = [double]$Settings.detailTitleFontSize
