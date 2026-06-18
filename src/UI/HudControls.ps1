@@ -1,4 +1,4 @@
-function New-HudReadOnlyTextBox {
+function global:New-HudReadOnlyTextBox {
     param(
         [AllowNull()][string]$Text,
         [Parameter(Mandatory = $true)][string]$FontFamily,
@@ -33,7 +33,7 @@ function New-HudReadOnlyTextBox {
     return $textBox
 }
 
-function New-HudFlatButton {
+function global:New-HudFlatButton {
     param(
         [Parameter(Mandatory = $true)][object]$Content,
         [double]$Width = -1,
@@ -60,7 +60,7 @@ function New-HudFlatButton {
     return $button
 }
 
-function Test-HudProperty {
+function global:Test-HudProperty {
     param(
         [AllowNull()][object]$Target,
         [Parameter(Mandatory = $true)][string]$Name
@@ -69,7 +69,22 @@ function Test-HudProperty {
     return ($null -ne $Target -and $null -ne $Target.PSObject.Properties[$Name])
 }
 
-function Remove-HudProperty {
+function global:Set-HudProperty {
+    param(
+        [Parameter(Mandatory = $true)][object]$Target,
+        [Parameter(Mandatory = $true)][string]$Name,
+        [AllowNull()][object]$Value
+    )
+
+    if (Test-HudProperty -Target $Target -Name $Name) {
+        $Target.$Name = $Value
+    }
+    else {
+        $Target | Add-Member -NotePropertyName $Name -NotePropertyValue $Value -Force
+    }
+}
+
+function global:Remove-HudProperty {
     param(
         [AllowNull()][object]$Target,
         [Parameter(Mandatory = $true)][string]$Name
@@ -80,7 +95,7 @@ function Remove-HudProperty {
     }
 }
 
-function Remove-HudArrayItem {
+function global:Remove-HudArrayItem {
     param(
         [AllowNull()][object[]]$Items,
         [AllowNull()][object]$RemoveItem
@@ -95,7 +110,7 @@ function Remove-HudArrayItem {
     return $remaining.ToArray()
 }
 
-function Get-HudTextLineCount {
+function global:Get-HudTextLineCount {
     param([AllowNull()][string]$Text)
 
     if ([string]::IsNullOrEmpty($Text)) {
@@ -120,7 +135,7 @@ function Get-HudTextLineCount {
     return $count
 }
 
-function Set-HudListBoxItems {
+function global:Set-HudListBoxItems {
     param(
         [Parameter(Mandatory = $true)][System.Windows.Controls.ListBox]$ListBox,
         [AllowNull()][object[]]$Items,
@@ -137,37 +152,5 @@ function Set-HudListBoxItems {
     }
     elseif ($ListBox.Items.Count -gt 0) {
         $ListBox.SelectedIndex = 0
-    }
-}
-
-function Get-HudScreenDipBounds {
-    param([Parameter(Mandatory = $true)][System.Drawing.Rectangle]$Bounds)
-
-    $dpiX = [uint32]96
-    $dpiY = [uint32]96
-    try {
-        $point = [HudNativeMethods+POINT]::new()
-        $point.x = $Bounds.Left
-        $point.y = $Bounds.Top
-        $monitor = [HudNativeMethods]::MonitorFromPoint($point, [HudNativeMethods]::MONITOR_DEFAULTTONEAREST)
-        if ($monitor -ne [IntPtr]::Zero) {
-            [void][HudNativeMethods]::GetDpiForMonitor($monitor, [HudNativeMethods]::MDT_EFFECTIVE_DPI, [ref]$dpiX, [ref]$dpiY)
-        }
-    }
-    catch {
-        $dpiX = [uint32]96
-        $dpiY = [uint32]96
-    }
-
-    $scaleX = [Math]::Max(0.1, [double]$dpiX / 96.0)
-    $scaleY = [Math]::Max(0.1, [double]$dpiY / 96.0)
-
-    return [pscustomobject]@{
-        Left = [double]$Bounds.Left / $scaleX
-        Top = [double]$Bounds.Top / $scaleY
-        Width = [double]$Bounds.Width / $scaleX
-        Height = [double]$Bounds.Height / $scaleY
-        ScaleX = $scaleX
-        ScaleY = $scaleY
     }
 }
