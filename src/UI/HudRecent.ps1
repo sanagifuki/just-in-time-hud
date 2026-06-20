@@ -9,6 +9,23 @@ function global:Set-RecentPanelVisibility {
     $script:HudRecentPanel.Visibility = [System.Windows.Visibility]::Visible
 }
 
+function global:Add-HudRecentPanelContextMenu {
+    if ($null -eq $script:HudRecentPanel) {
+        return
+    }
+
+    $menu = [System.Windows.Controls.ContextMenu]::new()
+    $bringToFrontItem = [System.Windows.Controls.MenuItem]::new()
+    $bringToFrontItem.Header = '最前面に表示'
+    $bringToFrontItem.Add_Click({
+        param($sender, $event)
+        Bring-HudPanelToFront -Panel $script:HudRecentPanel
+        $event.Handled = $true
+    })
+    [void]$menu.Items.Add($bringToFrontItem)
+    $script:HudRecentPanel.ContextMenu = $menu
+}
+
 function global:Update-RecentDetailWindow {
     param(
         [Parameter(Mandatory = $true)][object]$Feature,

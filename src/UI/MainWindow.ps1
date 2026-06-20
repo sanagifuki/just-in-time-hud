@@ -549,6 +549,7 @@ function Show-HudWindow {
     $script:HudRecentPrevButton = $recentPrevButton
     $script:HudRecentHistoryText = $recentHistoryText
     $script:HudRecentNextButton = $recentNextButton
+    Add-HudRecentPanelContextMenu
 
     function Set-EditorStatus {
         param([string]$Text)
