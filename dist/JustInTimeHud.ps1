@@ -1,6 +1,6 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: 74d7881
+# Source commit: 96c6288
 
 $script:HudSingleFile = $true
 
@@ -15,7 +15,7 @@ $script:EmbeddedHudDataJson = @'
           {
             "title": "Format memo prompt（メモ整理プロンプト）",
             "snippets": [
-              "以下のユーザ記載情報を、次の出力形式・ルールを元に、認知負荷が少ない情報として整理してください。\n\n## 作業情報(ユーザ記載)\n\n<内容>\n\n## 出力形式\n\n- 親分類: 作業領域や用途の大きなまとまり。\n- 中分類: 親分類の中で、具体的な作業種類や場面を分ける分類。\n- 機能名: 後から探すときの項目名。「English title（日本語説明）」形式にする。\n- 主要情報(Snippets): 実際にコピーして使うコマンド、定型文、手順、参照情報。複数ある場合は分けて書く。\n- 説明(Description): 主要情報の具体的な説明(何のために使うかなど)や補足情報などを説明する。\n\n## 出力例\n\n```\n- 親分類: `Terminal`\n- 中分類: `Git`\n- 機能名: `Status（変更状況の確認コマンド）`\n- 主要情報(Snippets):\n    ```\n    git status --short\n    ---\n    git diff --stat\n    ```\n- 説明(Description): \n    ```\n    コミット前に、作業ツリーの変更状況と差分の概要を確認するために使う。\n    ```\n```\n\n## ルール\n\n- 内容から用途を推測し、後から探しやすい分類名にする。\n- 親分類と中分類は、広すぎず細かすぎない粒度にする。\n- 機能名は「English title（日本語説明）」形式にする。\n- English title は、分類名ではなく、キー入力で探しやすい、機能を表す短い単語から始める。\n- English title は、親分類名や中分類名と同じ語で始めない。(例: `Git Status`ではなく`Status`)\n- 主要情報(Snippets)には、実際に再利用する本文だけを書く。\n- 主要情報(Snippets)が複数ある場合は、「---」だけの行で区切る。\n- 説明(Description)には、主要情報の目的、使う場面、注意点を簡潔に書く。\n- 不明な点がある場合は、足りない情報だけを質問する。"
+              "以下のユーザ記載情報を、次の出力形式・ルールを元に、認知負荷が少ない情報として整理してください。\r\n\r\n## 作業情報(ユーザ記載)\r\n\r\n<内容>\r\n\r\n## 出力形式\r\n\r\n- 親分類: 作業領域や用途の大きなまとまり。\r\n- 中分類: 親分類の中で、具体的な作業種類や場面を分ける分類。\r\n- 機能名: 後から探すときの項目名。「English title（日本語説明）」形式にする。\r\n- 主要情報(Snippets): 実際にコピーして使うコマンド、定型文、手順、参照情報。複数ある場合は分けて書く。\r\n- 説明(Description): 主要情報の具体的な説明(何のために使うかなど)や補足情報などを説明する。\r\n\r\n## 出力例\r\n\r\n```\r\n- 親分類: `Git`\r\n- 中分類: `Inspection（状態・差分の確認）`\r\n- 機能名: `Status: Short and Diff Stat（変更状況と差分概要の確認`\r\n- 主要情報(Snippets):\r\n    ```\r\n    git status --short\r\n    ---\r\n    git diff --stat\r\n    ```\r\n- 説明(Description): \r\n    ```\r\n    コミット前に、作業ツリーの変更状況と差分の概要を確認するために使う。\r\n    ```\r\n```\r\n\r\n## ルール\r\n\r\n- 内容から用途を推測し、後から探しやすい分類名にする。\r\n- 親分類は、作業を行う場所や手段ではなく、主な用途・目的を基準にする。\r\n- 中分類は、その項目1件だけにしか使えない名前にしない。\r\n- 中分類は、同じ分類に将来3件以上の関連項目を追加できる粒度にする。\r\n- 中分類は、個別の操作名ではなく、作業場面・準備工程・用途領域を表す名前にする。\r\n- 中分類は「English title（日本語説明）」形式にする。\r\n- 中分類のEnglish titleは、親分類名と同じ語で始めない。\r\n- 親分類と中分類は、広すぎず細かすぎない粒度にする。\r\n- 機能名は「English title（日本語説明）」形式にする。\r\n- English title は、分類名ではなく、キー入力で探しやすい、機能を表す短い単語から始める。\r\n- English title は、親分類名や中分類名と同じ語で始めない。(例: `Git Status`ではなく`Status`)\r\n- 主要情報(Snippets)がコマンドの場合、English titleは必要に応じて、コマンド名・サブコマンド名・主要オプションが想起できる語を含める。短いキー語だけでは判別しにくい場合は、`Status: Short and Diff Stat`のように`:`の後ろで対象や用途を補足する。\r\n- 主要情報(Snippets)には、実際に再利用する本文だけを書く。\r\n- 主要情報(Snippets)が複数ある場合は、「---」だけの行で区切る。\r\n- 説明(Description)には、主要情報の目的、使う場面、注意点を簡潔に書く。\r\n- 不明な点がある場合は、足りない情報だけを質問する。\r\n- 出力全体をコードブロックで囲まない。コードブロックを使うのは、主要情報(Snippets)や説明(Description)など、項目内の本文に限定する。\r\n- コードブロック内の各行は、実際にコピーする文字列として扱うため、不要な先頭スペースや末尾スペースを入れない。"
             ],
             "description": "雑に書いた内容を、分類・機能名・主要情報・説明へ整理するためのプロンプト。",
             "copyable": true,
@@ -115,6 +115,7 @@ $script:EmbeddedHudDataJson = @'
     ]
   }
 ]
+
 '@
 
 $script:EmbeddedHudSettingsJsonc = @'
