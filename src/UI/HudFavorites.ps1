@@ -117,6 +117,53 @@ function global:New-HudFavoritePanelBorder {
     return $border
 }
 
+function global:Bring-HudFavoritePanelToFront {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Windows.FrameworkElement]$Panel
+    )
+
+    if ($null -eq $script:HudFavoritePanels -or -not $script:HudFavoritePanels.Contains($Panel)) {
+        return
+    }
+
+    $orderedPanels = [System.Collections.Generic.List[object]]::new()
+    foreach ($favoritePanel in $script:HudFavoritePanels) {
+        if ($favoritePanel -ne $Panel) {
+            $orderedPanels.Add($favoritePanel)
+        }
+    }
+    $orderedPanels.Add($Panel)
+
+    for ($index = 0; $index -lt $orderedPanels.Count; $index++) {
+        [System.Windows.Controls.Panel]::SetZIndex($orderedPanels[$index], $index)
+    }
+
+    $script:HudFavoritePanels.Clear()
+    foreach ($favoritePanel in $orderedPanels) {
+        $script:HudFavoritePanels.Add($favoritePanel)
+    }
+}
+
+function global:Add-HudFavoritePanelContextMenu {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Windows.FrameworkElement]$Panel
+    )
+
+    $menu = [System.Windows.Controls.ContextMenu]::new()
+    $bringToFrontItem = [System.Windows.Controls.MenuItem]::new()
+    $bringToFrontItem.Header = '最前面に表示'
+    $bringToFrontItem.Tag = $Panel
+    $bringToFrontItem.Add_Click({
+        param($sender, $event)
+        Bring-HudFavoritePanelToFront -Panel $sender.Tag
+        $event.Handled = $true
+    })
+    [void]$menu.Items.Add($bringToFrontItem)
+    $Panel.ContextMenu = $menu
+}
+
 function global:Refresh-HudFavoritePanelsFromEvent {
     if ($null -eq $script:HudRoot) {
         $script:HudFavoritePanels = [System.Collections.Generic.List[object]]::new()
@@ -143,6 +190,7 @@ function global:Refresh-HudFavoritePanelsFromEvent {
     $index = 0
     foreach ($entry in $entries) {
         $border = New-HudFavoritePanelBorder -Entry $entry -Index $index
+        Add-HudFavoritePanelContextMenu -Panel $border
 
         $grid = [System.Windows.Controls.Grid]::new()
         $grid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
@@ -293,6 +341,7 @@ function global:Refresh-HudFavoritePanelsFromEvent {
         $border.Add_MouseLeftButtonUp({ param($sender, $event) Stop-HudPanelDrag -Event $event }.GetNewClosure())
         [void]$script:HudRoot.Children.Add($border)
         $script:HudFavoritePanels.Add($border)
+        [System.Windows.Controls.Panel]::SetZIndex($border, $script:HudFavoritePanels.Count - 1)
         $index++
     }
 }
