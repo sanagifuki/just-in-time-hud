@@ -17,6 +17,17 @@
   // 直近詳細HUDを表示するか。
   "showRecentPanel": true,
 
+  // メモパネルを表示するか。
+  "showMemoPanel": true,
+
+  // メモパネル左上の表示座標。
+  "memoPanelX": 1040,
+  "memoPanelY": 20,
+
+  // メモパネルのサイズ。
+  "memoPanelWidth": 420,
+  "memoPanelHeight": 220,
+
   // HUD全体のフォント。
   "fontFamily": "Yu Gothic UI",
 

@@ -30,6 +30,29 @@ function global:Get-HudClampedPanelMargin {
     return [System.Windows.Thickness]::new($clampedLeft, $clampedTop, 0, 0)
 }
 
+function global:Bring-HudPanelToFront {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Windows.FrameworkElement]$Panel
+    )
+
+    if ($null -eq $script:HudRoot -or -not $script:HudRoot.Children.Contains($Panel)) {
+        return
+    }
+
+    $orderedPanels = [System.Collections.Generic.List[object]]::new()
+    foreach ($child in $script:HudRoot.Children) {
+        if ($child -ne $Panel) {
+            $orderedPanels.Add($child)
+        }
+    }
+    $orderedPanels.Add($Panel)
+
+    for ($index = 0; $index -lt $orderedPanels.Count; $index++) {
+        [System.Windows.Controls.Panel]::SetZIndex($orderedPanels[$index], $index)
+    }
+}
+
 function global:Move-HudPanelDrag {
     param([Parameter(Mandatory = $true)][System.Windows.Input.MouseEventArgs]$Event)
 

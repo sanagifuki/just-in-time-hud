@@ -12,6 +12,7 @@
         'src/UI/HudFavorites.ps1'
         'src/UI/HudRecent.ps1'
         'src/UI/HudInput.ps1'
+        'src/UI/HudMemo.ps1'
         'src/UI/HudEditorView.ps1'
         'src/UI/MainWindow.ps1'
         'src/App/Run.ps1'

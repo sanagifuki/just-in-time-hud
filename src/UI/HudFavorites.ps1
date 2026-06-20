@@ -127,6 +127,8 @@ function global:Bring-HudFavoritePanelToFront {
         return
     }
 
+    Bring-HudPanelToFront -Panel $Panel
+
     $orderedPanels = [System.Collections.Generic.List[object]]::new()
     foreach ($favoritePanel in $script:HudFavoritePanels) {
         if ($favoritePanel -ne $Panel) {
@@ -134,10 +136,6 @@ function global:Bring-HudFavoritePanelToFront {
         }
     }
     $orderedPanels.Add($Panel)
-
-    for ($index = 0; $index -lt $orderedPanels.Count; $index++) {
-        [System.Windows.Controls.Panel]::SetZIndex($orderedPanels[$index], $index)
-    }
 
     $script:HudFavoritePanels.Clear()
     foreach ($favoritePanel in $orderedPanels) {

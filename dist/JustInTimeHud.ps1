@@ -1,6 +1,6 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: 96c6288
+# Source commit: 1d8a181
 
 $script:HudSingleFile = $true
 
@@ -28,7 +28,8 @@ $script:EmbeddedHudDataJson = @'
         "features": [
           {
             "title": "Overview（概要）",
-            "description": "Just-In-Time HUDは、よく使うコマンド、定型文、手順、参照情報を、必要な瞬間に短い操作で呼び出すためのHUDです。\n\n情報は「親分類 / 中分類 / 機能」の3階層で整理します。親分類はサービス名や作業領域くらいの大きなまとまり、中分類はその中の用途、機能は実際に呼び出す項目です。\n\n機能名は「English title（日本語説明）」形式にすると、キー入力で探しやすくなります。English titleは分類名ではなく、機能を表す短い単語から始めると使いやすいです。"
+            "description": "Just-In-Time HUDは、よく使うコマンド、定型文、手順、参照情報を、必要な瞬間に短い操作で呼び出すためのHUDです。\n\n情報は「親分類 / 中分類 / 機能」の3階層で整理します。親分類はサービス名や作業領域くらいの大きなまとまり、中分類はその中の用途、機能は実際に呼び出す項目です。\n\n機能名は「English title（日本語説明）」形式にすると、キー入力で探しやすくなります。English titleは分類名ではなく、機能を表す短い単語から始めると使いやすいです。",
+            "favorite": true
           },
           {
             "title": "Navigate（基本操作）",
@@ -115,7 +116,6 @@ $script:EmbeddedHudDataJson = @'
     ]
   }
 ]
-
 '@
 
 $script:EmbeddedHudSettingsJsonc = @'
@@ -137,6 +137,17 @@ $script:EmbeddedHudSettingsJsonc = @'
 
   // 直近詳細HUDを表示するか。
   "showRecentPanel": true,
+
+  // メモパネルを表示するか。
+  "showMemoPanel": true,
+
+  // メモパネル左上の表示座標。
+  "memoPanelX": 1040,
+  "memoPanelY": 20,
+
+  // メモパネルのサイズ。
+  "memoPanelWidth": 420,
+  "memoPanelHeight": 220,
 
   // HUD全体のフォント。
   "fontFamily": "Yu Gothic UI",
@@ -366,6 +377,11 @@ function Read-HudSettings {
         panelWidth = 420
         panelHeight = 360
         showRecentPanel = $true
+        showMemoPanel = $true
+        memoPanelX = 32
+        memoPanelY = 468
+        memoPanelWidth = 420
+        memoPanelHeight = 220
         fontFamily = 'Yu Gothic UI'
         titleFontSize = 15
         detailTitleFontSize = 15
@@ -392,7 +408,7 @@ function Read-HudSettings {
     }
 
     $settings = Remove-JsoncComments -Text (Get-Content -LiteralPath $Path -Raw -Encoding UTF8) | ConvertFrom-Json
-    foreach ($name in @('displayMonitorIndex', 'panelX', 'panelY', 'recentPanelX', 'recentPanelY', 'panelWidth', 'panelHeight', 'showRecentPanel', 'fontFamily', 'titleFontSize', 'detailTitleFontSize', 'featureTitleFontSize', 'filterFontSize', 'listFontSize', 'detailFontSize', 'snippetMaxHeight')) {
+    foreach ($name in @('displayMonitorIndex', 'panelX', 'panelY', 'recentPanelX', 'recentPanelY', 'panelWidth', 'panelHeight', 'showRecentPanel', 'showMemoPanel', 'memoPanelX', 'memoPanelY', 'memoPanelWidth', 'memoPanelHeight', 'fontFamily', 'titleFontSize', 'detailTitleFontSize', 'featureTitleFontSize', 'filterFontSize', 'listFontSize', 'detailFontSize', 'snippetMaxHeight')) {
         if ($null -eq $settings.$name) {
             $settings | Add-Member -NotePropertyName $name -NotePropertyValue $defaults.$name -Force
         }
@@ -971,6 +987,29 @@ function global:Get-HudClampedPanelMargin {
     return [System.Windows.Thickness]::new($clampedLeft, $clampedTop, 0, 0)
 }
 
+function global:Bring-HudPanelToFront {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Windows.FrameworkElement]$Panel
+    )
+
+    if ($null -eq $script:HudRoot -or -not $script:HudRoot.Children.Contains($Panel)) {
+        return
+    }
+
+    $orderedPanels = [System.Collections.Generic.List[object]]::new()
+    foreach ($child in $script:HudRoot.Children) {
+        if ($child -ne $Panel) {
+            $orderedPanels.Add($child)
+        }
+    }
+    $orderedPanels.Add($Panel)
+
+    for ($index = 0; $index -lt $orderedPanels.Count; $index++) {
+        [System.Windows.Controls.Panel]::SetZIndex($orderedPanels[$index], $index)
+    }
+}
+
 function global:Move-HudPanelDrag {
     param([Parameter(Mandatory = $true)][System.Windows.Input.MouseEventArgs]$Event)
 
@@ -1123,6 +1162,51 @@ function global:New-HudFavoritePanelBorder {
     return $border
 }
 
+function global:Bring-HudFavoritePanelToFront {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Windows.FrameworkElement]$Panel
+    )
+
+    if ($null -eq $script:HudFavoritePanels -or -not $script:HudFavoritePanels.Contains($Panel)) {
+        return
+    }
+
+    Bring-HudPanelToFront -Panel $Panel
+
+    $orderedPanels = [System.Collections.Generic.List[object]]::new()
+    foreach ($favoritePanel in $script:HudFavoritePanels) {
+        if ($favoritePanel -ne $Panel) {
+            $orderedPanels.Add($favoritePanel)
+        }
+    }
+    $orderedPanels.Add($Panel)
+
+    $script:HudFavoritePanels.Clear()
+    foreach ($favoritePanel in $orderedPanels) {
+        $script:HudFavoritePanels.Add($favoritePanel)
+    }
+}
+
+function global:Add-HudFavoritePanelContextMenu {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Windows.FrameworkElement]$Panel
+    )
+
+    $menu = [System.Windows.Controls.ContextMenu]::new()
+    $bringToFrontItem = [System.Windows.Controls.MenuItem]::new()
+    $bringToFrontItem.Header = '最前面に表示'
+    $bringToFrontItem.Tag = $Panel
+    $bringToFrontItem.Add_Click({
+        param($sender, $event)
+        Bring-HudFavoritePanelToFront -Panel $sender.Tag
+        $event.Handled = $true
+    })
+    [void]$menu.Items.Add($bringToFrontItem)
+    $Panel.ContextMenu = $menu
+}
+
 function global:Refresh-HudFavoritePanelsFromEvent {
     if ($null -eq $script:HudRoot) {
         $script:HudFavoritePanels = [System.Collections.Generic.List[object]]::new()
@@ -1149,6 +1233,7 @@ function global:Refresh-HudFavoritePanelsFromEvent {
     $index = 0
     foreach ($entry in $entries) {
         $border = New-HudFavoritePanelBorder -Entry $entry -Index $index
+        Add-HudFavoritePanelContextMenu -Panel $border
 
         $grid = [System.Windows.Controls.Grid]::new()
         $grid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
@@ -1299,6 +1384,7 @@ function global:Refresh-HudFavoritePanelsFromEvent {
         $border.Add_MouseLeftButtonUp({ param($sender, $event) Stop-HudPanelDrag -Event $event }.GetNewClosure())
         [void]$script:HudRoot.Children.Add($border)
         $script:HudFavoritePanels.Add($border)
+        [System.Windows.Controls.Panel]::SetZIndex($border, $script:HudFavoritePanels.Count - 1)
         $index++
     }
 }
@@ -1493,6 +1579,72 @@ function global:ConvertFrom-HudKeyToCandidateNumber {
 }
 
 #endregion src/UI/HudInput.ps1
+
+#region src/UI/HudMemo.ps1
+function global:Test-HudMemoSource {
+    param([AllowNull()][object]$Source)
+
+    if ($null -eq $script:HudMemoTextBox -or $null -eq $Source) {
+        return $false
+    }
+    if ($Source -eq $script:HudMemoTextBox) {
+        return $true
+    }
+    if ($Source -isnot [System.Windows.DependencyObject]) {
+        return $false
+    }
+
+    return $script:HudMemoTextBox.IsAncestorOf($Source)
+}
+
+function global:Move-HudMemoFocusToRoot {
+    if ($null -eq $script:HudMemoTextBox -or $null -eq $script:HudRoot) {
+        return
+    }
+
+    $focusScope = [System.Windows.Input.FocusManager]::GetFocusScope($script:HudMemoTextBox)
+    [System.Windows.Input.FocusManager]::SetFocusedElement($focusScope, $null)
+    [System.Windows.Input.Keyboard]::ClearFocus()
+    $script:HudRoot.Focus() | Out-Null
+    [System.Windows.Input.Keyboard]::Focus($script:HudRoot) | Out-Null
+}
+
+function global:Bring-HudMemoPanelToFront {
+    if ($null -ne $script:HudMemoPanel) {
+        Bring-HudPanelToFront -Panel $script:HudMemoPanel
+    }
+}
+
+function global:Focus-HudMemo {
+    if ($null -eq $script:HudMemoPanel -or $null -eq $script:HudMemoTextBox) {
+        return
+    }
+
+    $script:HudMemoPanel.Visibility = [System.Windows.Visibility]::Visible
+    Bring-HudMemoPanelToFront
+    $script:HudMemoTextBox.Focus() | Out-Null
+    [System.Windows.Input.Keyboard]::Focus($script:HudMemoTextBox) | Out-Null
+    $script:HudMemoTextBox.CaretIndex = $script:HudMemoTextBox.Text.Length
+}
+
+function global:Add-HudMemoPanelContextMenu {
+    if ($null -eq $script:HudMemoPanel) {
+        return
+    }
+
+    $menu = [System.Windows.Controls.ContextMenu]::new()
+    $bringToFrontItem = [System.Windows.Controls.MenuItem]::new()
+    $bringToFrontItem.Header = '最前面に表示'
+    $bringToFrontItem.Add_Click({
+        param($sender, $event)
+        Bring-HudMemoPanelToFront
+        $event.Handled = $true
+    })
+    [void]$menu.Items.Add($bringToFrontItem)
+    $script:HudMemoPanel.ContextMenu = $menu
+}
+
+#endregion src/UI/HudMemo.ps1
 
 #region src/UI/HudEditorView.ps1
 function global:New-HudEditorWindow {
@@ -1721,11 +1873,21 @@ function Show-HudWindow {
     $recentPanelY = [int]$Settings.recentPanelY
     $panelWidth = [int]$Settings.panelWidth
     $panelHeight = [int]$Settings.panelHeight
+    $memoPanelX = [int]$Settings.memoPanelX
+    $memoPanelY = [int]$Settings.memoPanelY
+    $memoPanelWidth = [int]$Settings.memoPanelWidth
+    $memoPanelHeight = [int]$Settings.memoPanelHeight
     $panelX = [Math]::Max(0, [Math]::Min($visibleWidth - $panelWidth, $panelX))
     $panelY = [Math]::Max(0, [Math]::Min($visibleHeight - $panelHeight, $panelY))
     $recentPanelX = [Math]::Max(0, [Math]::Min($visibleWidth - $panelWidth, $recentPanelX))
     $recentPanelY = [Math]::Max(0, [Math]::Min($visibleHeight - $panelHeight, $recentPanelY))
+    $memoPanelWidth = [Math]::Max(180, [Math]::Min($visibleWidth, $memoPanelWidth))
+    $memoPanelHeight = [Math]::Max(100, [Math]::Min($visibleHeight, $memoPanelHeight))
+    $memoPanelX = [Math]::Max(0, [Math]::Min($visibleWidth - $memoPanelWidth, $memoPanelX))
+    $memoPanelY = [Math]::Max(0, [Math]::Min($visibleHeight - $memoPanelHeight, $memoPanelY))
     $showRecentPanel = [bool]$Settings.showRecentPanel
+    $showMemoPanel = [bool]$Settings.showMemoPanel
+    $memoPanelVisibility = if ($showMemoPanel) { 'Visible' } else { 'Collapsed' }
     $editorWidth = 920
     $editorHeight = 620
     $editorLeft = $visibleLeft + [Math]::Max(0, [int](($visibleWidth - $editorWidth) / 2))
@@ -2119,6 +2281,65 @@ function Show-HudWindow {
                 </StackPanel>
             </Grid>
         </Border>
+        <Border Name="MemoPanel"
+                Width="$memoPanelWidth"
+                Height="$memoPanelHeight"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Margin="$memoPanelX,$memoPanelY,0,0"
+                Background="#F6F8FA"
+                BorderBrush="#B8C0CC"
+                BorderThickness="1"
+                Padding="12,10,12,10"
+                Visibility="$memoPanelVisibility">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid Name="MemoHeaderDragArea"
+                      Grid.Row="0"
+                      Background="Transparent"
+                      Margin="0,0,0,3">
+                    <TextBlock Text="Memo"
+                               FontFamily="$fontFamily"
+                               FontSize="$titleFontSize"
+                               FontWeight="SemiBold"
+                               Foreground="#1F2937"/>
+                    <TextBlock Name="MemoDragHandle"
+                               Text="・・・"
+                               Width="28"
+                               Height="20"
+                               TextAlignment="Center"
+                               Foreground="#9CA3AF"
+                               FontFamily="$fontFamily"
+                               FontSize="$filterFontSize"
+                               HorizontalAlignment="Right"/>
+                </Grid>
+                <TextBox Name="MemoTextBox"
+                         Grid.Row="1"
+                         FontFamily="$fontFamily"
+                         FontSize="$detailFontSize"
+                         Foreground="#374151"
+                         Background="#F6F8FA"
+                         BorderBrush="#ABADB3"
+                         BorderThickness="1"
+                         Padding="6"
+                         AcceptsReturn="True"
+                         AcceptsTab="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Disabled"/>
+                <Border Grid.Row="2"
+                        Padding="0,5,0,0">
+                    <TextBlock FontFamily="$fontFamily"
+                               FontSize="$filterFontSize"
+                               Foreground="#374151"
+                               Text="Shift+Tab: 入力開始 / 終了    Esc: 入力終了"/>
+                </Border>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
 "@
@@ -2161,6 +2382,13 @@ function Show-HudWindow {
     $recentPrevButton = $window.FindName('RecentPrevButton')
     $recentHistoryText = $window.FindName('RecentHistoryText')
     $recentNextButton = $window.FindName('RecentNextButton')
+    $memoPanel = $window.FindName('MemoPanel')
+    $memoHeaderDragArea = $window.FindName('MemoHeaderDragArea')
+    $memoDragHandle = $window.FindName('MemoDragHandle')
+    $memoTextBox = $window.FindName('MemoTextBox')
+    $script:HudMemoPanel = $memoPanel
+    $script:HudMemoTextBox = $memoTextBox
+    Add-HudMemoPanelContextMenu
     $script:HudRecentPanel = $recentPanel
     $script:HudRecentPathText = $recentPathText
     $script:HudRecentFeatureTitleText = $recentFeatureTitleText
@@ -2778,6 +3006,13 @@ function Show-HudWindow {
         }
 
         $source = $Event.OriginalSource
+        if (
+            $memoTextBox.IsKeyboardFocusWithin -and
+            -not (Test-HudMemoSource -Source $source)
+        ) {
+            Move-HudMemoFocusToRoot
+        }
+
         $dragBandTarget = $null
         while ($null -ne $source) {
             if ($source -is [System.Windows.Controls.Button] -or $source -is [System.Windows.Controls.TextBox]) {
@@ -2791,7 +3026,11 @@ function Show-HudWindow {
                 $dragBandTarget = $recentPanel
                 break
             }
-            if ($source -is [System.Windows.FrameworkElement] -and $source.Name -in @('MainHeaderDragArea', 'TitleMarkerText', 'TitleText', 'MainDragHandle', 'RecentPathText', 'RecentFeatureTitleDragArea', 'RecentFeatureTitleText', 'RecentDragHandle')) {
+            if ($source -eq $memoPanel) {
+                $dragBandTarget = $memoPanel
+                break
+            }
+            if ($source -is [System.Windows.FrameworkElement] -and $source.Name -in @('MainHeaderDragArea', 'TitleMarkerText', 'TitleText', 'MainDragHandle', 'RecentPathText', 'RecentFeatureTitleDragArea', 'RecentFeatureTitleText', 'RecentDragHandle', 'MemoHeaderDragArea', 'MemoDragHandle')) {
                 return
             }
             $source = [System.Windows.Media.VisualTreeHelper]::GetParent($source)
@@ -2896,11 +3135,33 @@ function Show-HudWindow {
             return
         }
 
-        if ([System.Windows.Input.Keyboard]::Modifiers -band [System.Windows.Input.ModifierKeys]::Control) {
+        $key = if ($Event.Key -eq [System.Windows.Input.Key]::System) { $Event.SystemKey } else { $Event.Key }
+        $isShiftTab = (
+            $key -eq [System.Windows.Input.Key]::Tab -and
+            ([System.Windows.Input.Keyboard]::Modifiers -band [System.Windows.Input.ModifierKeys]::Shift)
+        )
+        if ($memoTextBox.IsKeyboardFocusWithin) {
+            if ($isShiftTab) {
+                Move-HudMemoFocusToRoot
+                $Event.Handled = $true
+                return
+            }
+            if ($key -eq [System.Windows.Input.Key]::Escape) {
+                Move-HudMemoFocusToRoot
+                $Event.Handled = $true
+            }
             return
         }
 
-        $key = if ($Event.Key -eq [System.Windows.Input.Key]::System) { $Event.SystemKey } else { $Event.Key }
+        if ($isShiftTab) {
+            Focus-HudMemo
+            $Event.Handled = $true
+            return
+        }
+
+        if ([System.Windows.Input.Keyboard]::Modifiers -band [System.Windows.Input.ModifierKeys]::Control) {
+            return
+        }
 
         if ($key -eq [System.Windows.Input.Key]::Space) {
             Hide-HudSession
@@ -2955,6 +3216,10 @@ function Show-HudWindow {
             return
         }
 
+        if ($memoTextBox.IsKeyboardFocusWithin) {
+            return
+        }
+
         if ($Event.Text.Length -eq 1 -and [char]::IsLetterOrDigit($Event.Text[0])) {
             Append-HudTextFilter -Text $Event.Text
             $Event.Handled = $true
@@ -2983,6 +3248,10 @@ function Show-HudWindow {
     $recentDragHandle.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $recentPanel -Event $event }.GetNewClosure())
     $recentPanel.Add_MouseMove({ param($sender, $event) Move-HudPanelDrag -Event $event }.GetNewClosure())
     $recentPanel.Add_MouseLeftButtonUp({ param($sender, $event) Stop-HudPanelDrag -Event $event }.GetNewClosure())
+    $memoHeaderDragArea.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $memoPanel -Event $event }.GetNewClosure())
+    $memoDragHandle.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $memoPanel -Event $event }.GetNewClosure())
+    $memoPanel.Add_MouseMove({ param($sender, $event) Move-HudPanelDrag -Event $event }.GetNewClosure())
+    $memoPanel.Add_MouseLeftButtonUp({ param($sender, $event) Stop-HudPanelDrag -Event $event }.GetNewClosure())
     $minimizeButton.Add_Click({ Hide-HudSession })
     $editItemsButton.Add_Click({ Show-EditorPanel })
     $favoriteButton.Add_Click({ Toggle-HudFavoriteFromDetail })

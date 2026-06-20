@@ -133,6 +133,11 @@ function Read-HudSettings {
         panelWidth = 420
         panelHeight = 360
         showRecentPanel = $true
+        showMemoPanel = $true
+        memoPanelX = 32
+        memoPanelY = 468
+        memoPanelWidth = 420
+        memoPanelHeight = 220
         fontFamily = 'Yu Gothic UI'
         titleFontSize = 15
         detailTitleFontSize = 15
@@ -159,7 +164,7 @@ function Read-HudSettings {
     }
 
     $settings = Remove-JsoncComments -Text (Get-Content -LiteralPath $Path -Raw -Encoding UTF8) | ConvertFrom-Json
-    foreach ($name in @('displayMonitorIndex', 'panelX', 'panelY', 'recentPanelX', 'recentPanelY', 'panelWidth', 'panelHeight', 'showRecentPanel', 'fontFamily', 'titleFontSize', 'detailTitleFontSize', 'featureTitleFontSize', 'filterFontSize', 'listFontSize', 'detailFontSize', 'snippetMaxHeight')) {
+    foreach ($name in @('displayMonitorIndex', 'panelX', 'panelY', 'recentPanelX', 'recentPanelY', 'panelWidth', 'panelHeight', 'showRecentPanel', 'showMemoPanel', 'memoPanelX', 'memoPanelY', 'memoPanelWidth', 'memoPanelHeight', 'fontFamily', 'titleFontSize', 'detailTitleFontSize', 'featureTitleFontSize', 'filterFontSize', 'listFontSize', 'detailFontSize', 'snippetMaxHeight')) {
         if ($null -eq $settings.$name) {
             $settings | Add-Member -NotePropertyName $name -NotePropertyValue $defaults.$name -Force
         }
