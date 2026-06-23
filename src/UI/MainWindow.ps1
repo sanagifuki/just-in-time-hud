@@ -1026,6 +1026,28 @@ function Show-HudWindow {
         }
     }
 
+    function Focus-HudRootForInput {
+        if ($null -ne $script:HudEditorWindow -and $script:HudEditorWindow.IsVisible) {
+            return
+        }
+        if ($memoTextBox.IsKeyboardFocusWithin) {
+            return
+        }
+
+        [void]$window.Dispatcher.BeginInvoke(
+            [Action]{
+                if (
+                    -not $script:HudIsRetreated -and
+                    -not $memoTextBox.IsKeyboardFocusWithin
+                ) {
+                    $root.Focus() | Out-Null
+                    [System.Windows.Input.Keyboard]::Focus($root) | Out-Null
+                }
+            },
+            [System.Windows.Threading.DispatcherPriority]::Input
+        )
+    }
+
     function Show-HudSession {
         if ($null -ne $script:HudEditorWindow -and $script:HudEditorWindow.IsVisible) {
             $script:HudEditorWindow.Activate() | Out-Null
@@ -1041,7 +1063,7 @@ function Show-HudWindow {
         Show-RecentDetailIfAvailable
         Refresh-HudFavoritePanelsFromEvent
         $window.Activate() | Out-Null
-        $root.Focus() | Out-Null
+        Focus-HudRootForInput
     }
 
     function Move-ToCandidate {
@@ -1412,7 +1434,10 @@ function Show-HudWindow {
     $recentPrevButton.Add_Click({ Move-RecentHistory -Delta 1 })
     $recentNextButton.Add_Click({ Move-RecentHistory -Delta -1 })
     $list.Add_MouseDoubleClick({ Select-CurrentCandidate })
-    $window.Add_Activated({ Show-HudSession })
+    $window.Add_Activated({
+        Show-HudSession
+        Focus-HudRootForInput
+    })
     $window.Add_Loaded({
         $root.Focus() | Out-Null
         [void]$window.Dispatcher.BeginInvoke(
