@@ -776,12 +776,12 @@ function Show-HudWindow {
         $editorCopyableBox.Add_Click({
             Apply-EditorFeatureFields -DirtyFields @('Shortcut')
             Save-EditorItems
-            Refresh-HudFavoritePanelsFromEvent
+            Refresh-HudFavoritePanelsFromEvent -ForceRebuild $true
         })
         $editorFavoriteBox.Add_Click({
             Apply-EditorFeatureFields -DirtyFields @()
             Save-EditorItems
-            Refresh-HudFavoritePanelsFromEvent
+            Refresh-HudFavoritePanelsFromEvent -ForceRebuild $true
         })
         $editorCategoryNameBox.Add_TextChanged({
             if (-not $script:HudEditorRefreshing) {

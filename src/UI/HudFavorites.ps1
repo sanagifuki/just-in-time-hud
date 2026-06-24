@@ -163,6 +163,8 @@ function global:Add-HudFavoritePanelContextMenu {
 }
 
 function global:Refresh-HudFavoritePanelsFromEvent {
+    param([bool]$ForceRebuild = $false)
+
     if ($null -eq $script:HudRoot) {
         $script:HudFavoritePanels = [System.Collections.Generic.List[object]]::new()
         return
@@ -175,6 +177,25 @@ function global:Refresh-HudFavoritePanelsFromEvent {
         return
     }
 
+    $entries = @(Get-HudFavoriteEntries)
+    if (-not $ForceRebuild -and $null -ne $script:HudFavoritePanels -and $script:HudFavoritePanels.Count -eq $entries.Count) {
+        $samePanels = $true
+        for ($index = 0; $index -lt $entries.Count; $index++) {
+            $featureId = "$($entries[$index].CategoryName)`n$($entries[$index].GroupName)`n$($entries[$index].Feature.title)"
+            if ([string]$script:HudFavoritePanels[$index].Tag -ne $featureId) {
+                $samePanels = $false
+                break
+            }
+        }
+
+        if ($samePanels) {
+            foreach ($favoritePanel in @($script:HudFavoritePanels)) {
+                $favoritePanel.Visibility = [System.Windows.Visibility]::Visible
+            }
+            return
+        }
+    }
+
     foreach ($favoritePanel in @($script:HudFavoritePanels)) {
         $featureId = [string]$favoritePanel.Tag
         if (-not [string]::IsNullOrWhiteSpace($featureId)) {
@@ -184,7 +205,6 @@ function global:Refresh-HudFavoritePanelsFromEvent {
     }
     $script:HudFavoritePanels = [System.Collections.Generic.List[object]]::new()
 
-    $entries = @(Get-HudFavoriteEntries)
     $index = 0
     foreach ($entry in $entries) {
         $border = New-HudFavoritePanelBorder -Entry $entry -Index $index
@@ -246,7 +266,7 @@ function global:Refresh-HudFavoritePanelsFromEvent {
             if ($script:HudState.SelectedFeature -eq $entry.Feature) {
                 Set-FavoriteButtonStateFromEvent -Feature $entry.Feature
             }
-            Refresh-HudFavoritePanelsFromEvent
+            Refresh-HudFavoritePanelsFromEvent -ForceRebuild $true
             $event.Handled = $true
         }.GetNewClosure())
         [System.Windows.Controls.Grid]::SetRow($unfavoriteButton, 0)
@@ -359,5 +379,5 @@ function global:Toggle-HudFavoriteFromDetail {
 
     Save-HudJsonFromEvent
     Set-FavoriteButtonStateFromEvent -Feature $feature
-    Refresh-HudFavoritePanelsFromEvent
+    Refresh-HudFavoritePanelsFromEvent -ForceRebuild $true
 }
