@@ -1436,7 +1436,10 @@ function Show-HudWindow {
     $list.Add_MouseDoubleClick({ Select-CurrentCandidate })
     $window.Add_Activated({
         Show-HudSession
-        Focus-HudRootForInput
+        if (-not $script:HudIsRetreated -and -not $memoTextBox.IsKeyboardFocusWithin) {
+            $root.Focus() | Out-Null
+            [System.Windows.Input.Keyboard]::Focus($root) | Out-Null
+        }
     })
     $window.Add_Loaded({
         $root.Focus() | Out-Null
