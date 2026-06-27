@@ -1400,7 +1400,11 @@ function Show-HudWindow {
         }
     }
 
-    $window.Add_PreviewKeyDown({ param($sender, $event) Handle-HudKeyDown -Event $event })
+    $window.AddHandler(
+        [System.Windows.Input.Keyboard]::PreviewKeyDownEvent,
+        [System.Windows.Input.KeyEventHandler]{ param($sender, $event) Handle-HudKeyDown -Event $event },
+        $true
+    )
     $root.Add_PreviewKeyDown({ param($sender, $event) Handle-HudKeyDown -Event $event })
     $list.Add_PreviewKeyDown({ param($sender, $event) Handle-HudKeyDown -Event $event })
     $detail.Add_PreviewKeyDown({ param($sender, $event) Handle-HudKeyDown -Event $event })
@@ -1424,6 +1428,7 @@ function Show-HudWindow {
     $recentPanel.Add_MouseLeftButtonUp({ param($sender, $event) Stop-HudPanelDrag -Event $event }.GetNewClosure())
     $memoHeaderDragArea.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $memoPanel -Event $event }.GetNewClosure())
     $memoDragHandle.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $memoPanel -Event $event }.GetNewClosure())
+    $memoPanel.Add_PreviewMouseLeftButtonDown({ Bring-HudMemoPanelToFront })
     $memoPanel.Add_MouseMove({ param($sender, $event) Move-HudPanelDrag -Event $event }.GetNewClosure())
     $memoPanel.Add_MouseLeftButtonUp({ param($sender, $event) Stop-HudPanelDrag -Event $event }.GetNewClosure())
     $minimizeButton.Add_Click({ Hide-HudSession })

@@ -22,52 +22,56 @@ function global:Set-FavoriteButtonStateFromEvent {
 }
 
 function global:Get-HudFavoriteDefaultMarginFromEvent {
-    param([Parameter(Mandatory = $true)][int]$Index)
+    param([Parameter(Mandatory = $true)][int]$GroupIndex)
 
-    $gap = 12
-    $stepX = $script:HudFavoritePanelWidth + $gap
-    $stepY = $script:HudFavoritePanelHeight + $gap
+    $outerMargin = 24
+    $gap = 16
+    $cascadeOffset = 18
+    $cascadeReserve = 54
+    $stepX = $script:HudFavoritePanelWidth + $gap + $cascadeReserve
+    $stepY = $script:HudFavoritePanelHeight + $gap + $cascadeReserve
     $baseX = $script:HudFavoritePanelX
     $baseY = $script:HudFavoritePanelY
+    $minLeft = [Math]::Min($outerMargin, [Math]::Max(0, $script:HudFavoriteVisibleWidth - $script:HudFavoritePanelWidth))
+    $minTop = [Math]::Min($outerMargin, [Math]::Max(0, $script:HudFavoriteVisibleHeight - $script:HudFavoritePanelHeight))
+    $maxLeft = [Math]::Max($minLeft, $script:HudFavoriteVisibleWidth - $script:HudFavoritePanelWidth - $outerMargin)
+    $maxTop = [Math]::Max($minTop, $script:HudFavoriteVisibleHeight - $script:HudFavoritePanelHeight - $outerMargin)
     $slots = [System.Collections.Generic.List[object]]::new()
 
-    $rowOffsets = @(0, -1, 1, -2, 2, -3, 3)
-    foreach ($rowOffset in $rowOffsets) {
-        $top = $baseY + ($stepY * $rowOffset)
-        if ($top -lt 0 -or ($top + $script:HudFavoritePanelHeight) -gt $script:HudFavoriteVisibleHeight) {
-            continue
-        }
-
-        for ($column = 1; $column -le 20; $column++) {
-            $left = $baseX - ($stepX * $column)
-            if ($left -lt 0) {
-                break
-            }
-            $slots.Add([System.Windows.Thickness]::new($left, $top, 0, 0))
-        }
-
-        for ($column = 0; $column -lt 20; $column++) {
-            $left = $baseX + $stepX + ($stepX * $column)
-            if (($left + $script:HudFavoritePanelWidth) -gt $script:HudFavoriteVisibleWidth) {
-                break
-            }
+    for ($top = $minTop; $top -le $maxTop; $top += $stepY) {
+        for ($left = $minLeft; $left -le $maxLeft; $left += $stepX) {
             $slots.Add([System.Windows.Thickness]::new($left, $top, 0, 0))
         }
     }
 
-    if ($Index -lt $slots.Count) {
-        return $slots[$Index]
+    foreach ($slot in $slots) {
+        if (Test-HudFavoriteMarginAvailable -Margin $slot) {
+            return $slot
+        }
     }
 
-    $fallbackLeft = [Math]::Max(0, [Math]::Min(
-        $script:HudFavoriteVisibleWidth - $script:HudFavoritePanelWidth,
-        $baseX - ($stepX * (($Index % 3) + 1))
-    ))
-    $fallbackTop = [Math]::Max(0, [Math]::Min(
-        $script:HudFavoriteVisibleHeight - $script:HudFavoritePanelHeight,
-        $baseY + (24 * [Math]::Floor($Index / 3))
-    ))
+    if ($slots.Count -gt 0) {
+        $cascadeLayer = [Math]::Max(0, [Math]::Floor($GroupIndex / $slots.Count))
+        $baseSlot = $slots[$GroupIndex % $slots.Count]
+        $fallbackLeft = [Math]::Max($minLeft, [Math]::Min($maxLeft, $baseSlot.Left + ($cascadeOffset * $cascadeLayer)))
+        $fallbackTop = [Math]::Max($minTop, [Math]::Min($maxTop, $baseSlot.Top + ($cascadeOffset * $cascadeLayer)))
+        return [System.Windows.Thickness]::new($fallbackLeft, $fallbackTop, 0, 0)
+    }
+
+    $fallbackLeft = [Math]::Max($minLeft, [Math]::Min($maxLeft, $baseX))
+    $fallbackTop = [Math]::Max($minTop, [Math]::Min($maxTop, $baseY))
     return [System.Windows.Thickness]::new($fallbackLeft, $fallbackTop, 0, 0)
+}
+
+function global:Test-HudFavoriteMarginAvailable {
+    param([Parameter(Mandatory = $true)][System.Windows.Thickness]$Margin)
+
+    return -not (Test-HudPanelMarginOverlapsVisiblePanel `
+        -Left $Margin.Left `
+        -Top $Margin.Top `
+        -Width $script:HudFavoritePanelWidth `
+        -Height $script:HudFavoritePanelHeight `
+        -Gap 8)
 }
 
 function global:Get-HudFavoriteEntries {
@@ -91,7 +95,8 @@ function global:Get-HudFavoriteEntries {
 function global:New-HudFavoritePanelBorder {
     param(
         [Parameter(Mandatory = $true)][object]$Entry,
-        [Parameter(Mandatory = $true)][int]$Index
+        [Parameter(Mandatory = $true)][System.Windows.Thickness]$BaseMargin,
+        [Parameter(Mandatory = $true)][int]$CascadeIndex
     )
 
     $border = [System.Windows.Controls.Border]::new()
@@ -102,13 +107,9 @@ function global:New-HudFavoritePanelBorder {
 
     $featureId = "$($Entry.CategoryName)`n$($Entry.GroupName)`n$($Entry.Feature.title)"
     $border.Tag = $featureId
-    if ($script:HudFavoritePanelPositions.ContainsKey($featureId)) {
-        $border.Margin = $script:HudFavoritePanelPositions[$featureId]
-    }
-    else {
-        $defaultMargin = Get-HudFavoriteDefaultMarginFromEvent -Index $Index
-        $border.Margin = Get-HudClampedPanelMargin -Target $border -Left $defaultMargin.Left -Top $defaultMargin.Top
-    }
+    $left = $BaseMargin.Left + (18 * $CascadeIndex)
+    $top = $BaseMargin.Top + (18 * $CascadeIndex)
+    $border.Margin = Get-HudClampedPanelMargin -Target $border -Left $left -Top $top
 
     $border.Background = $script:HudBrushPanelBackground
     $border.BorderBrush = $script:HudBrushPanelBorder
@@ -192,6 +193,7 @@ function global:Refresh-HudFavoritePanelsFromEvent {
             foreach ($favoritePanel in @($script:HudFavoritePanels)) {
                 $favoritePanel.Visibility = [System.Windows.Visibility]::Visible
             }
+            Bring-HudMemoPanelToFront
             return
         }
     }
@@ -206,8 +208,27 @@ function global:Refresh-HudFavoritePanelsFromEvent {
     $script:HudFavoritePanels = [System.Collections.Generic.List[object]]::new()
 
     $index = 0
+    $groupBaseMargins = @{}
+    $groupItemCounts = @{}
+    $groupIndex = 0
+    $maxCascadeItems = 3
     foreach ($entry in $entries) {
-        $border = New-HudFavoritePanelBorder -Entry $entry -Index $index
+        $groupKey = "$($entry.CategoryName)`n$($entry.GroupName)"
+        if (-not $groupItemCounts.ContainsKey($groupKey)) {
+            $groupItemCounts[$groupKey] = 0
+        }
+
+        $groupItemIndex = [int]$groupItemCounts[$groupKey]
+        $stackIndex = [int][Math]::Floor($groupItemIndex / $maxCascadeItems)
+        $cascadeIndex = $groupItemIndex % $maxCascadeItems
+        $stackKey = "$groupKey`n$stackIndex"
+        if (-not $groupBaseMargins.ContainsKey($stackKey)) {
+            $groupBaseMargins[$stackKey] = Get-HudFavoriteDefaultMarginFromEvent -GroupIndex $groupIndex
+            $groupIndex++
+        }
+        $groupItemCounts[$groupKey] = $groupItemIndex + 1
+
+        $border = New-HudFavoritePanelBorder -Entry $entry -BaseMargin $groupBaseMargins[$stackKey] -CascadeIndex $cascadeIndex
         Add-HudFavoritePanelContextMenu -Panel $border
 
         $grid = [System.Windows.Controls.Grid]::new()
@@ -362,6 +383,7 @@ function global:Refresh-HudFavoritePanelsFromEvent {
         [System.Windows.Controls.Panel]::SetZIndex($border, $script:HudFavoritePanels.Count - 1)
         $index++
     }
+    Bring-HudMemoPanelToFront
 }
 
 function global:Toggle-HudFavoriteFromDetail {

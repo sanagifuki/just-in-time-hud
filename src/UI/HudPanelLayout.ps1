@@ -30,6 +30,69 @@ function global:Get-HudClampedPanelMargin {
     return [System.Windows.Thickness]::new($clampedLeft, $clampedTop, 0, 0)
 }
 
+function global:Get-HudPanelRect {
+    param(
+        [Parameter(Mandatory = $true)][double]$Left,
+        [Parameter(Mandatory = $true)][double]$Top,
+        [Parameter(Mandatory = $true)][double]$Width,
+        [Parameter(Mandatory = $true)][double]$Height,
+        [double]$Gap = 0
+    )
+
+    return [pscustomobject]@{
+        Left = $Left - $Gap
+        Top = $Top - $Gap
+        Right = $Left + $Width + $Gap
+        Bottom = $Top + $Height + $Gap
+    }
+}
+
+function global:Test-HudPanelRectOverlap {
+    param(
+        [Parameter(Mandatory = $true)][object]$A,
+        [Parameter(Mandatory = $true)][object]$B
+    )
+
+    return ($A.Left -lt $B.Right -and $A.Right -gt $B.Left -and $A.Top -lt $B.Bottom -and $A.Bottom -gt $B.Top)
+}
+
+function global:Test-HudPanelMarginOverlapsVisiblePanel {
+    param(
+        [Parameter(Mandatory = $true)][double]$Left,
+        [Parameter(Mandatory = $true)][double]$Top,
+        [Parameter(Mandatory = $true)][double]$Width,
+        [Parameter(Mandatory = $true)][double]$Height,
+        [double]$Gap = 8
+    )
+
+    if ($null -eq $script:HudRoot) {
+        return $false
+    }
+
+    $candidateRect = Get-HudPanelRect -Left $Left -Top $Top -Width $Width -Height $Height -Gap $Gap
+    foreach ($child in $script:HudRoot.Children) {
+        if ($child -isnot [System.Windows.FrameworkElement]) {
+            continue
+        }
+        if ($child.Visibility -ne [System.Windows.Visibility]::Visible) {
+            continue
+        }
+
+        $childWidth = if ($child.ActualWidth -gt 0) { $child.ActualWidth } else { $child.Width }
+        $childHeight = if ($child.ActualHeight -gt 0) { $child.ActualHeight } else { $child.Height }
+        if ([double]::IsNaN($childWidth) -or [double]::IsNaN($childHeight) -or $childWidth -le 0 -or $childHeight -le 0) {
+            continue
+        }
+
+        $childRect = Get-HudPanelRect -Left $child.Margin.Left -Top $child.Margin.Top -Width $childWidth -Height $childHeight -Gap $Gap
+        if (Test-HudPanelRectOverlap -A $candidateRect -B $childRect) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
 function global:Bring-HudPanelToFront {
     param(
         [Parameter(Mandatory = $true)]
