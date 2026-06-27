@@ -71,7 +71,8 @@ function global:New-HudFavoritePanelBorder {
     param(
         [Parameter(Mandatory = $true)][object]$Entry,
         [Parameter(Mandatory = $true)][System.Windows.Thickness]$BaseMargin,
-        [Parameter(Mandatory = $true)][int]$CascadeIndex
+        [Parameter(Mandatory = $true)][int]$CascadeIndex,
+        [Parameter(Mandatory = $true)][string]$StateKey
     )
 
     $border = [System.Windows.Controls.Border]::new()
@@ -82,6 +83,7 @@ function global:New-HudFavoritePanelBorder {
 
     $featureId = "$($Entry.CategoryName)`n$($Entry.GroupName)`n$($Entry.Feature.title)"
     $border.Tag = $featureId
+    $border.Uid = $StateKey
     $left = $BaseMargin.Left + (18 * $CascadeIndex)
     $top = $BaseMargin.Top + (18 * $CascadeIndex)
     $border.Margin = [System.Windows.Thickness]::new($left, $top, 0, 0)
@@ -189,7 +191,7 @@ function global:Refresh-HudFavoritePanelsFromEvent {
         $cascadeIndex = $index % $maxCascadeItems
         $baseMargin = Get-HudFavoriteDefaultMarginFromEvent -StackIndex $stackIndex
 
-        $border = New-HudFavoritePanelBorder -Entry $entry -BaseMargin $baseMargin -CascadeIndex $cascadeIndex
+        $border = New-HudFavoritePanelBorder -Entry $entry -BaseMargin $baseMargin -CascadeIndex $cascadeIndex -StateKey "favorite:$index"
         Add-HudFavoritePanelContextMenu -Panel $border
 
         $grid = [System.Windows.Controls.Grid]::new()
@@ -342,6 +344,7 @@ function global:Refresh-HudFavoritePanelsFromEvent {
         [void]$script:HudRoot.Children.Add($border)
         $script:HudFavoritePanels.Add($border)
         [System.Windows.Controls.Panel]::SetZIndex($border, $script:HudFavoritePanels.Count - 1)
+        Apply-HudUiStateToPanel -Panel $border
         $index++
     }
     Bring-HudMemoPanelToFront

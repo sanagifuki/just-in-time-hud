@@ -30,6 +30,149 @@ function global:Get-HudClampedPanelMargin {
     return [System.Windows.Thickness]::new($clampedLeft, $clampedTop, 0, 0)
 }
 
+function global:Get-HudAnchorClampedPanelMargin {
+    param(
+        [Parameter(Mandatory = $true)][double]$Left,
+        [Parameter(Mandatory = $true)][double]$Top
+    )
+
+    $maxLeft = [Math]::Max(0, $script:HudFavoriteVisibleWidth - 32)
+    $maxTop = [Math]::Max(0, $script:HudFavoriteVisibleHeight - 32)
+    $clampedLeft = [Math]::Max(0, [Math]::Min($maxLeft, $Left))
+    $clampedTop = [Math]::Max(0, [Math]::Min($maxTop, $Top))
+    return [System.Windows.Thickness]::new($clampedLeft, $clampedTop, 0, 0)
+}
+
+function global:Get-HudPanelStateInfo {
+    param([AllowNull()][System.Windows.FrameworkElement]$Panel)
+
+    if ($null -eq $Panel) {
+        return $null
+    }
+    if ($Panel -eq $script:HudMainPanel) {
+        return [pscustomobject]@{ Container = 'panels'; Key = 'main' }
+    }
+    if ($Panel -eq $script:HudRecentPanel) {
+        return [pscustomobject]@{ Container = 'panels'; Key = 'recent' }
+    }
+    if ($Panel -eq $script:HudMemoPanel) {
+        return [pscustomobject]@{ Container = 'panels'; Key = 'memo' }
+    }
+    if ($null -ne $script:HudFavoritePanels -and $script:HudFavoritePanels.Contains($Panel)) {
+        $stateKey = [string]$Panel.Uid
+        if (-not [string]::IsNullOrWhiteSpace($stateKey)) {
+            return [pscustomobject]@{ Container = 'favoritePanels'; Key = $stateKey }
+        }
+    }
+
+    return $null
+}
+
+function global:Get-HudUiStateContainer {
+    param([Parameter(Mandatory = $true)][string]$Name)
+
+    if ($null -eq $script:HudUiState) {
+        $script:HudUiState = New-HudUiState
+    }
+    Ensure-HudObjectProperty -Target $script:HudUiState -Name 'panels' -Value ([pscustomobject]@{})
+    Ensure-HudObjectProperty -Target $script:HudUiState -Name 'favoritePanels' -Value ([pscustomobject]@{})
+    return $script:HudUiState.$Name
+}
+
+function global:Get-HudUiStatePanelEntry {
+    param([Parameter(Mandatory = $true)][object]$Info)
+
+    $container = Get-HudUiStateContainer -Name $Info.Container
+    $property = $container.PSObject.Properties[$Info.Key]
+    if ($null -eq $property) {
+        return $null
+    }
+
+    return $property.Value
+}
+
+function global:Set-HudUiStatePanelEntry {
+    param(
+        [Parameter(Mandatory = $true)][object]$Info,
+        [Parameter(Mandatory = $true)][System.Windows.FrameworkElement]$Panel
+    )
+
+    $container = Get-HudUiStateContainer -Name $Info.Container
+    $entry = [pscustomobject]@{
+        x = [Math]::Round([double]$Panel.Margin.Left, 2)
+        y = [Math]::Round([double]$Panel.Margin.Top, 2)
+        z = [System.Windows.Controls.Panel]::GetZIndex($Panel)
+    }
+    if ($null -eq $container.PSObject.Properties[$Info.Key]) {
+        $container | Add-Member -NotePropertyName $Info.Key -NotePropertyValue $entry -Force
+    }
+    else {
+        $container.PSObject.Properties[$Info.Key].Value = $entry
+    }
+}
+
+function global:Save-HudPanelUiState {
+    param([Parameter(Mandatory = $true)][System.Windows.FrameworkElement]$Panel)
+
+    $info = Get-HudPanelStateInfo -Panel $Panel
+    if ($null -eq $info) {
+        return
+    }
+
+    Set-HudUiStatePanelEntry -Info $info -Panel $Panel
+    Save-HudUiStateFromEvent
+}
+
+function global:Save-HudAllPanelUiState {
+    if ($null -eq $script:HudRoot) {
+        return
+    }
+
+    foreach ($child in $script:HudRoot.Children) {
+        if ($child -is [System.Windows.FrameworkElement]) {
+            $info = Get-HudPanelStateInfo -Panel $child
+            if ($null -ne $info) {
+                Set-HudUiStatePanelEntry -Info $info -Panel $child
+            }
+        }
+    }
+    Save-HudUiStateFromEvent
+}
+
+function global:Apply-HudUiStateToPanel {
+    param([Parameter(Mandatory = $true)][System.Windows.FrameworkElement]$Panel)
+
+    $info = Get-HudPanelStateInfo -Panel $Panel
+    if ($null -eq $info) {
+        return
+    }
+
+    $entry = Get-HudUiStatePanelEntry -Info $info
+    if ($null -eq $entry) {
+        return
+    }
+
+    if ($null -ne $entry.x -and $null -ne $entry.y) {
+        $Panel.Margin = Get-HudAnchorClampedPanelMargin -Left ([double]$entry.x) -Top ([double]$entry.y)
+    }
+    if ($null -ne $entry.z) {
+        [System.Windows.Controls.Panel]::SetZIndex($Panel, [int]$entry.z)
+    }
+}
+
+function global:Apply-HudUiStateToKnownPanels {
+    foreach ($panel in @($script:HudMainPanel, $script:HudRecentPanel, $script:HudMemoPanel)) {
+        if ($null -ne $panel) {
+            Apply-HudUiStateToPanel -Panel $panel
+        }
+    }
+    foreach ($favoritePanel in @($script:HudFavoritePanels)) {
+        if ($null -ne $favoritePanel) {
+            Apply-HudUiStateToPanel -Panel $favoritePanel
+        }
+    }
+}
+
 function global:Get-HudPanelRect {
     param(
         [Parameter(Mandatory = $true)][double]$Left,
@@ -114,6 +257,7 @@ function global:Bring-HudPanelToFront {
     for ($index = 0; $index -lt $orderedPanels.Count; $index++) {
         [System.Windows.Controls.Panel]::SetZIndex($orderedPanels[$index], $index)
     }
+    Save-HudAllPanelUiState
 }
 
 function global:Move-HudPanelDrag {
@@ -139,9 +283,11 @@ function global:Stop-HudPanelDrag {
         return
     }
 
-    $script:HudDragTarget.ReleaseMouseCapture()
+    $dragTarget = $script:HudDragTarget
+    $dragTarget.ReleaseMouseCapture()
     $script:HudDragTarget = $null
     $script:HudDragStartPoint = $null
     $script:HudDragStartMargin = $null
+    Save-HudPanelUiState -Panel $dragTarget
     $Event.Handled = $true
 }

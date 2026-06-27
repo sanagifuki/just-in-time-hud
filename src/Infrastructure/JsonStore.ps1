@@ -37,6 +37,78 @@ function Save-HudJson {
     [System.IO.File]::WriteAllText([System.IO.Path]::GetFullPath($Path), $json, [System.Text.UTF8Encoding]::new($true))
 }
 
+function New-HudUiState {
+    [pscustomobject]@{
+        version = 1
+        panels = [pscustomobject]@{}
+        favoritePanels = [pscustomobject]@{}
+    }
+}
+
+function Ensure-HudObjectProperty {
+    param(
+        [Parameter(Mandatory = $true)][object]$Target,
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][object]$Value
+    )
+
+    if ($null -eq $Target.PSObject.Properties[$Name]) {
+        $Target | Add-Member -NotePropertyName $Name -NotePropertyValue $Value -Force
+    }
+}
+
+function Read-HudUiState {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return New-HudUiState
+    }
+
+    try {
+        $state = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+    }
+    catch {
+        return New-HudUiState
+    }
+    if ($null -eq $state) {
+        return New-HudUiState
+    }
+
+    Ensure-HudObjectProperty -Target $state -Name 'version' -Value 1
+    Ensure-HudObjectProperty -Target $state -Name 'panels' -Value ([pscustomobject]@{})
+    Ensure-HudObjectProperty -Target $state -Name 'favoritePanels' -Value ([pscustomobject]@{})
+    return $state
+}
+
+function Save-HudUiState {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [object]$State
+    )
+
+    $directory = Split-Path -Parent $Path
+    if ($directory -and -not (Test-Path -LiteralPath $directory)) {
+        New-Item -ItemType Directory -Force -Path $directory | Out-Null
+    }
+
+    $json = $State | ConvertTo-Json -Depth 20
+    [System.IO.File]::WriteAllText([System.IO.Path]::GetFullPath($Path), $json, [System.Text.UTF8Encoding]::new($true))
+}
+
+function Save-HudUiStateFromEvent {
+    if (-not $script:HudUiStateReadyToSave -or $null -eq $script:HudUiState -or [string]::IsNullOrWhiteSpace($script:DefaultHudStatePath)) {
+        return
+    }
+
+    Save-HudUiState -Path $script:DefaultHudStatePath -State $script:HudUiState
+}
+
 function Write-HudTextFileIfMissing {
     param(
         [Parameter(Mandatory = $true)]

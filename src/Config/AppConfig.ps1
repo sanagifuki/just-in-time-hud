@@ -7,4 +7,5 @@ else {
     Join-Path $script:AppRoot 'hud-items.json'
 }
 $script:DefaultHudSettingsPath = Join-Path $script:AppRoot 'settings.jsonc'
+$script:DefaultHudStatePath = Join-Path $script:AppRoot 'hud-state.json'
 $script:DefaultHudIconPath = Join-Path $script:AppRoot 'assets\icon.ico'

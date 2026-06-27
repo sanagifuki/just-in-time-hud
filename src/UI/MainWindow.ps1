@@ -76,6 +76,8 @@ function Show-HudWindow {
     $script:HudShowRecentPanel = $showRecentPanel
     $script:HudFavoritePanels = [System.Collections.Generic.List[object]]::new()
     $script:HudFavoritePanelPositions = @{}
+    $script:HudUiState = Read-HudUiState -Path $script:DefaultHudStatePath
+    $script:HudUiStateReadyToSave = $false
     $script:HudState = $State
     $script:HudFavoritePanelWidth = $panelWidth
     $script:HudFavoritePanelHeight = $panelHeight
@@ -503,6 +505,7 @@ function Show-HudWindow {
     $root = $window.FindName('Root')
     $script:HudRoot = $root
     $panel = $window.FindName('Panel')
+    $script:HudMainPanel = $panel
     $mainHeaderDragArea = $window.FindName('MainHeaderDragArea')
     $titleMarker = $window.FindName('TitleMarkerText')
     $title = $window.FindName('TitleText')
@@ -550,6 +553,7 @@ function Show-HudWindow {
     $script:HudRecentHistoryText = $recentHistoryText
     $script:HudRecentNextButton = $recentNextButton
     Add-HudRecentPanelContextMenu
+    Apply-HudUiStateToKnownPanels
 
     function Set-EditorStatus {
         param([string]$Text)
@@ -1457,5 +1461,7 @@ function Show-HudWindow {
     Refresh-HudView
     Show-RecentDetailIfAvailable
     Refresh-HudFavoritePanelsFromEvent
+    Apply-HudUiStateToKnownPanels
+    $script:HudUiStateReadyToSave = $true
     [void]$window.ShowDialog()
 }

@@ -1,6 +1,6 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: a1b0395
+# Source commit: 5336930
 
 $script:HudSingleFile = $true
 
@@ -237,6 +237,7 @@ else {
     Join-Path $script:AppRoot 'hud-items.json'
 }
 $script:DefaultHudSettingsPath = Join-Path $script:AppRoot 'settings.jsonc'
+$script:DefaultHudStatePath = Join-Path $script:AppRoot 'hud-state.json'
 $script:DefaultHudIconPath = Join-Path $script:AppRoot 'assets\icon.ico'
 
 #endregion src/Config/AppConfig.ps1
@@ -279,6 +280,78 @@ function Save-HudJson {
 
     $json = @($Items) | ConvertTo-Json -Depth 20
     [System.IO.File]::WriteAllText([System.IO.Path]::GetFullPath($Path), $json, [System.Text.UTF8Encoding]::new($true))
+}
+
+function New-HudUiState {
+    [pscustomobject]@{
+        version = 1
+        panels = [pscustomobject]@{}
+        favoritePanels = [pscustomobject]@{}
+    }
+}
+
+function Ensure-HudObjectProperty {
+    param(
+        [Parameter(Mandatory = $true)][object]$Target,
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][object]$Value
+    )
+
+    if ($null -eq $Target.PSObject.Properties[$Name]) {
+        $Target | Add-Member -NotePropertyName $Name -NotePropertyValue $Value -Force
+    }
+}
+
+function Read-HudUiState {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return New-HudUiState
+    }
+
+    try {
+        $state = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+    }
+    catch {
+        return New-HudUiState
+    }
+    if ($null -eq $state) {
+        return New-HudUiState
+    }
+
+    Ensure-HudObjectProperty -Target $state -Name 'version' -Value 1
+    Ensure-HudObjectProperty -Target $state -Name 'panels' -Value ([pscustomobject]@{})
+    Ensure-HudObjectProperty -Target $state -Name 'favoritePanels' -Value ([pscustomobject]@{})
+    return $state
+}
+
+function Save-HudUiState {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [object]$State
+    )
+
+    $directory = Split-Path -Parent $Path
+    if ($directory -and -not (Test-Path -LiteralPath $directory)) {
+        New-Item -ItemType Directory -Force -Path $directory | Out-Null
+    }
+
+    $json = $State | ConvertTo-Json -Depth 20
+    [System.IO.File]::WriteAllText([System.IO.Path]::GetFullPath($Path), $json, [System.Text.UTF8Encoding]::new($true))
+}
+
+function Save-HudUiStateFromEvent {
+    if (-not $script:HudUiStateReadyToSave -or $null -eq $script:HudUiState -or [string]::IsNullOrWhiteSpace($script:DefaultHudStatePath)) {
+        return
+    }
+
+    Save-HudUiState -Path $script:DefaultHudStatePath -State $script:HudUiState
 }
 
 function Write-HudTextFileIfMissing {
@@ -987,6 +1060,149 @@ function global:Get-HudClampedPanelMargin {
     return [System.Windows.Thickness]::new($clampedLeft, $clampedTop, 0, 0)
 }
 
+function global:Get-HudAnchorClampedPanelMargin {
+    param(
+        [Parameter(Mandatory = $true)][double]$Left,
+        [Parameter(Mandatory = $true)][double]$Top
+    )
+
+    $maxLeft = [Math]::Max(0, $script:HudFavoriteVisibleWidth - 32)
+    $maxTop = [Math]::Max(0, $script:HudFavoriteVisibleHeight - 32)
+    $clampedLeft = [Math]::Max(0, [Math]::Min($maxLeft, $Left))
+    $clampedTop = [Math]::Max(0, [Math]::Min($maxTop, $Top))
+    return [System.Windows.Thickness]::new($clampedLeft, $clampedTop, 0, 0)
+}
+
+function global:Get-HudPanelStateInfo {
+    param([AllowNull()][System.Windows.FrameworkElement]$Panel)
+
+    if ($null -eq $Panel) {
+        return $null
+    }
+    if ($Panel -eq $script:HudMainPanel) {
+        return [pscustomobject]@{ Container = 'panels'; Key = 'main' }
+    }
+    if ($Panel -eq $script:HudRecentPanel) {
+        return [pscustomobject]@{ Container = 'panels'; Key = 'recent' }
+    }
+    if ($Panel -eq $script:HudMemoPanel) {
+        return [pscustomobject]@{ Container = 'panels'; Key = 'memo' }
+    }
+    if ($null -ne $script:HudFavoritePanels -and $script:HudFavoritePanels.Contains($Panel)) {
+        $stateKey = [string]$Panel.Uid
+        if (-not [string]::IsNullOrWhiteSpace($stateKey)) {
+            return [pscustomobject]@{ Container = 'favoritePanels'; Key = $stateKey }
+        }
+    }
+
+    return $null
+}
+
+function global:Get-HudUiStateContainer {
+    param([Parameter(Mandatory = $true)][string]$Name)
+
+    if ($null -eq $script:HudUiState) {
+        $script:HudUiState = New-HudUiState
+    }
+    Ensure-HudObjectProperty -Target $script:HudUiState -Name 'panels' -Value ([pscustomobject]@{})
+    Ensure-HudObjectProperty -Target $script:HudUiState -Name 'favoritePanels' -Value ([pscustomobject]@{})
+    return $script:HudUiState.$Name
+}
+
+function global:Get-HudUiStatePanelEntry {
+    param([Parameter(Mandatory = $true)][object]$Info)
+
+    $container = Get-HudUiStateContainer -Name $Info.Container
+    $property = $container.PSObject.Properties[$Info.Key]
+    if ($null -eq $property) {
+        return $null
+    }
+
+    return $property.Value
+}
+
+function global:Set-HudUiStatePanelEntry {
+    param(
+        [Parameter(Mandatory = $true)][object]$Info,
+        [Parameter(Mandatory = $true)][System.Windows.FrameworkElement]$Panel
+    )
+
+    $container = Get-HudUiStateContainer -Name $Info.Container
+    $entry = [pscustomobject]@{
+        x = [Math]::Round([double]$Panel.Margin.Left, 2)
+        y = [Math]::Round([double]$Panel.Margin.Top, 2)
+        z = [System.Windows.Controls.Panel]::GetZIndex($Panel)
+    }
+    if ($null -eq $container.PSObject.Properties[$Info.Key]) {
+        $container | Add-Member -NotePropertyName $Info.Key -NotePropertyValue $entry -Force
+    }
+    else {
+        $container.PSObject.Properties[$Info.Key].Value = $entry
+    }
+}
+
+function global:Save-HudPanelUiState {
+    param([Parameter(Mandatory = $true)][System.Windows.FrameworkElement]$Panel)
+
+    $info = Get-HudPanelStateInfo -Panel $Panel
+    if ($null -eq $info) {
+        return
+    }
+
+    Set-HudUiStatePanelEntry -Info $info -Panel $Panel
+    Save-HudUiStateFromEvent
+}
+
+function global:Save-HudAllPanelUiState {
+    if ($null -eq $script:HudRoot) {
+        return
+    }
+
+    foreach ($child in $script:HudRoot.Children) {
+        if ($child -is [System.Windows.FrameworkElement]) {
+            $info = Get-HudPanelStateInfo -Panel $child
+            if ($null -ne $info) {
+                Set-HudUiStatePanelEntry -Info $info -Panel $child
+            }
+        }
+    }
+    Save-HudUiStateFromEvent
+}
+
+function global:Apply-HudUiStateToPanel {
+    param([Parameter(Mandatory = $true)][System.Windows.FrameworkElement]$Panel)
+
+    $info = Get-HudPanelStateInfo -Panel $Panel
+    if ($null -eq $info) {
+        return
+    }
+
+    $entry = Get-HudUiStatePanelEntry -Info $info
+    if ($null -eq $entry) {
+        return
+    }
+
+    if ($null -ne $entry.x -and $null -ne $entry.y) {
+        $Panel.Margin = Get-HudAnchorClampedPanelMargin -Left ([double]$entry.x) -Top ([double]$entry.y)
+    }
+    if ($null -ne $entry.z) {
+        [System.Windows.Controls.Panel]::SetZIndex($Panel, [int]$entry.z)
+    }
+}
+
+function global:Apply-HudUiStateToKnownPanels {
+    foreach ($panel in @($script:HudMainPanel, $script:HudRecentPanel, $script:HudMemoPanel)) {
+        if ($null -ne $panel) {
+            Apply-HudUiStateToPanel -Panel $panel
+        }
+    }
+    foreach ($favoritePanel in @($script:HudFavoritePanels)) {
+        if ($null -ne $favoritePanel) {
+            Apply-HudUiStateToPanel -Panel $favoritePanel
+        }
+    }
+}
+
 function global:Get-HudPanelRect {
     param(
         [Parameter(Mandatory = $true)][double]$Left,
@@ -1071,6 +1287,7 @@ function global:Bring-HudPanelToFront {
     for ($index = 0; $index -lt $orderedPanels.Count; $index++) {
         [System.Windows.Controls.Panel]::SetZIndex($orderedPanels[$index], $index)
     }
+    Save-HudAllPanelUiState
 }
 
 function global:Move-HudPanelDrag {
@@ -1096,10 +1313,12 @@ function global:Stop-HudPanelDrag {
         return
     }
 
-    $script:HudDragTarget.ReleaseMouseCapture()
+    $dragTarget = $script:HudDragTarget
+    $dragTarget.ReleaseMouseCapture()
     $script:HudDragTarget = $null
     $script:HudDragStartPoint = $null
     $script:HudDragStartMargin = $null
+    Save-HudPanelUiState -Panel $dragTarget
     $Event.Handled = $true
 }
 
@@ -1179,7 +1398,8 @@ function global:New-HudFavoritePanelBorder {
     param(
         [Parameter(Mandatory = $true)][object]$Entry,
         [Parameter(Mandatory = $true)][System.Windows.Thickness]$BaseMargin,
-        [Parameter(Mandatory = $true)][int]$CascadeIndex
+        [Parameter(Mandatory = $true)][int]$CascadeIndex,
+        [Parameter(Mandatory = $true)][string]$StateKey
     )
 
     $border = [System.Windows.Controls.Border]::new()
@@ -1190,6 +1410,7 @@ function global:New-HudFavoritePanelBorder {
 
     $featureId = "$($Entry.CategoryName)`n$($Entry.GroupName)`n$($Entry.Feature.title)"
     $border.Tag = $featureId
+    $border.Uid = $StateKey
     $left = $BaseMargin.Left + (18 * $CascadeIndex)
     $top = $BaseMargin.Top + (18 * $CascadeIndex)
     $border.Margin = [System.Windows.Thickness]::new($left, $top, 0, 0)
@@ -1297,7 +1518,7 @@ function global:Refresh-HudFavoritePanelsFromEvent {
         $cascadeIndex = $index % $maxCascadeItems
         $baseMargin = Get-HudFavoriteDefaultMarginFromEvent -StackIndex $stackIndex
 
-        $border = New-HudFavoritePanelBorder -Entry $entry -BaseMargin $baseMargin -CascadeIndex $cascadeIndex
+        $border = New-HudFavoritePanelBorder -Entry $entry -BaseMargin $baseMargin -CascadeIndex $cascadeIndex -StateKey "favorite:$index"
         Add-HudFavoritePanelContextMenu -Panel $border
 
         $grid = [System.Windows.Controls.Grid]::new()
@@ -1450,6 +1671,7 @@ function global:Refresh-HudFavoritePanelsFromEvent {
         [void]$script:HudRoot.Children.Add($border)
         $script:HudFavoritePanels.Add($border)
         [System.Windows.Controls.Panel]::SetZIndex($border, $script:HudFavoritePanels.Count - 1)
+        Apply-HudUiStateToPanel -Panel $border
         $index++
     }
     Bring-HudMemoPanelToFront
@@ -2008,6 +2230,8 @@ function Show-HudWindow {
     $script:HudShowRecentPanel = $showRecentPanel
     $script:HudFavoritePanels = [System.Collections.Generic.List[object]]::new()
     $script:HudFavoritePanelPositions = @{}
+    $script:HudUiState = Read-HudUiState -Path $script:DefaultHudStatePath
+    $script:HudUiStateReadyToSave = $false
     $script:HudState = $State
     $script:HudFavoritePanelWidth = $panelWidth
     $script:HudFavoritePanelHeight = $panelHeight
@@ -2435,6 +2659,7 @@ function Show-HudWindow {
     $root = $window.FindName('Root')
     $script:HudRoot = $root
     $panel = $window.FindName('Panel')
+    $script:HudMainPanel = $panel
     $mainHeaderDragArea = $window.FindName('MainHeaderDragArea')
     $titleMarker = $window.FindName('TitleMarkerText')
     $title = $window.FindName('TitleText')
@@ -2482,6 +2707,7 @@ function Show-HudWindow {
     $script:HudRecentHistoryText = $recentHistoryText
     $script:HudRecentNextButton = $recentNextButton
     Add-HudRecentPanelContextMenu
+    Apply-HudUiStateToKnownPanels
 
     function Set-EditorStatus {
         param([string]$Text)
@@ -3389,6 +3615,8 @@ function Show-HudWindow {
     Refresh-HudView
     Show-RecentDetailIfAvailable
     Refresh-HudFavoritePanelsFromEvent
+    Apply-HudUiStateToKnownPanels
+    $script:HudUiStateReadyToSave = $true
     [void]$window.ShowDialog()
 }
 

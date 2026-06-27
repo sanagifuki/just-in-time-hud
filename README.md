@@ -76,6 +76,8 @@ hud-items.json
 settings.jsonc
 ```
 
+パネルをドラッグ移動したり、右クリックメニューで `最前面に表示` を使うと、同じフォルダに `hud-state.json` が作成されます。`hud-state.json` はパネルの現在座標と前面/背面順を保存する実行時状態ファイルです。
+
 検証:
 
 ```powershell
@@ -211,7 +213,7 @@ HUD右上の `Edit` から、親分類・中分類・機能の追加、削除、
 
 ## 設定
 
-`settings.jsonc` で表示位置、サイズ、フォント、背景色を変更できます。
+`settings.jsonc` で初期表示位置、サイズ、フォント、背景色を変更できます。
 
 ```jsonc
 {
@@ -250,12 +252,12 @@ HUD右上の `Edit` から、親分類・中分類・機能の追加、削除、
 | 設定 | 説明 |
 | --- | --- |
 | `displayMonitorIndex` | HUDを表示するモニター番号。0始まり |
-| `panelX`, `panelY` | 検索HUDパネルの左上座標。選択モニター内の相対座標 |
-| `recentPanelX`, `recentPanelY` | 直近詳細HUDパネルの左上座標。選択モニター内の相対座標 |
+| `panelX`, `panelY` | 検索HUDパネルの初期左上座標。選択モニター内の相対座標 |
+| `recentPanelX`, `recentPanelY` | 直近詳細HUDパネルの初期左上座標。選択モニター内の相対座標 |
 | `panelWidth`, `panelHeight` | メイン、直近、お気に入りの各HUDパネル共通サイズ |
 | `showRecentPanel` | 直近詳細HUDを表示するか |
 | `showMemoPanel` | メモパネルを表示するか |
-| `memoPanelX`, `memoPanelY` | メモパネルの左上座標。選択モニター内の相対座標 |
+| `memoPanelX`, `memoPanelY` | メモパネルの初期左上座標。選択モニター内の相対座標 |
 | `memoPanelWidth`, `memoPanelHeight` | メモパネルのサイズ |
 | `fontFamily` | HUD全体のフォント |
 | `featureTitleFontSize` | 詳細画面の機能名タイトルサイズ |
@@ -265,6 +267,19 @@ HUD右上の `Edit` から、親分類・中分類・機能の追加、削除、
 `backgroundRgba.a` は `0.0` から `1.0`、または `0` から `255` で指定できます。
 
 `settings.jsonc` が無い場合は、単一ファイルに埋め込まれた初期設定から自動生成されます。
+
+### UI状態
+
+`hud-state.json` は、パネルを動かした後の現在座標と前面/背面順を保存します。起動しただけでは作成されず、ドラッグ終了時や `最前面に表示` の実行時に作成・更新されます。
+
+座標の優先順:
+
+```text
+hud-state.json の現在座標
+settings.jsonc の初期座標
+```
+
+配置を初期状態へ戻したい場合は、アプリ終了後に `hud-state.json` を削除してください。次回起動時は `settings.jsonc` の座標が使われます。
 
 ## リポジトリ構成
 
