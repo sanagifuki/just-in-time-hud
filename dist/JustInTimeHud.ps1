@@ -1,6 +1,6 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: 5336930
+# Source commit: f0bf38a
 
 $script:HudSingleFile = $true
 
@@ -1133,6 +1133,9 @@ function global:Set-HudUiStatePanelEntry {
         y = [Math]::Round([double]$Panel.Margin.Top, 2)
         z = [System.Windows.Controls.Panel]::GetZIndex($Panel)
     }
+    if ($Info.Container -eq 'favoritePanels' -and $Panel.Resources.Contains('HudFavoriteCollapsed')) {
+        $entry | Add-Member -NotePropertyName 'collapsed' -NotePropertyValue ([bool]$Panel.Resources['HudFavoriteCollapsed']) -Force
+    }
     if ($null -eq $container.PSObject.Properties[$Info.Key]) {
         $container | Add-Member -NotePropertyName $Info.Key -NotePropertyValue $entry -Force
     }
@@ -1187,6 +1190,9 @@ function global:Apply-HudUiStateToPanel {
     }
     if ($null -ne $entry.z) {
         [System.Windows.Controls.Panel]::SetZIndex($Panel, [int]$entry.z)
+    }
+    if ($info.Container -eq 'favoritePanels' -and $null -ne $entry.collapsed) {
+        Set-HudFavoritePanelCollapsed -Panel $Panel -Collapsed ([bool]$entry.collapsed)
     }
 }
 
@@ -1418,7 +1424,7 @@ function global:New-HudFavoritePanelBorder {
     $border.Background = $script:HudBrushPanelBackground
     $border.BorderBrush = $script:HudBrushPanelBorder
     $border.BorderThickness = [System.Windows.Thickness]::new(1)
-    $border.Padding = [System.Windows.Thickness]::new(12, 10, 12, 8)
+    $border.Padding = [System.Windows.Thickness]::new(12, 12, 12, 8)
     return $border
 }
 
@@ -1465,6 +1471,29 @@ function global:Add-HudFavoritePanelContextMenu {
     })
     [void]$menu.Items.Add($bringToFrontItem)
     $Panel.ContextMenu = $menu
+}
+
+function global:Set-HudFavoritePanelCollapsed {
+    param(
+        [Parameter(Mandatory = $true)][System.Windows.Controls.Border]$Panel,
+        [Parameter(Mandatory = $true)][bool]$Collapsed,
+        [bool]$SaveState = $false
+    )
+
+    if ($Panel.Resources.Contains('HudFavoriteBody')) {
+        $body = $Panel.Resources['HudFavoriteBody']
+        $body.Visibility = if ($Collapsed) { [System.Windows.Visibility]::Collapsed } else { [System.Windows.Visibility]::Visible }
+    }
+    if ($Panel.Resources.Contains('HudFavoriteCollapseButton')) {
+        $button = $Panel.Resources['HudFavoriteCollapseButton']
+        $button.Content = if ($Collapsed) { '▶' } else { '▼' }
+    }
+
+    $Panel.Height = if ($Collapsed) { [double]::NaN } else { $script:HudFavoritePanelHeight }
+    $Panel.Resources['HudFavoriteCollapsed'] = $Collapsed
+    if ($SaveState) {
+        Save-HudPanelUiState -Panel $Panel
+    }
 }
 
 function global:Refresh-HudFavoritePanelsFromEvent {
@@ -1588,19 +1617,50 @@ function global:Refresh-HudFavoritePanelsFromEvent {
         $favoriteBodyScroll.VerticalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Auto
         $favoriteBodyScroll.HorizontalScrollBarVisibility = [System.Windows.Controls.ScrollBarVisibility]::Disabled
         $favoriteBodyScroll.CanContentScroll = $false
-        $favoriteBodyScroll.Margin = [System.Windows.Thickness]::new(0, 4, 0, 0)
-        [System.Windows.Controls.Grid]::SetRow($favoriteBodyScroll, 1)
-        [System.Windows.Controls.Grid]::SetRowSpan($favoriteBodyScroll, 3)
+        $favoriteBodyScroll.Margin = [System.Windows.Thickness]::new(0, 0, 0, 0)
+        [System.Windows.Controls.Grid]::SetRow($favoriteBodyScroll, 2)
+        [System.Windows.Controls.Grid]::SetRowSpan($favoriteBodyScroll, 2)
         [System.Windows.Controls.Grid]::SetColumnSpan($favoriteBodyScroll, 3)
 
         $favoriteBody = [System.Windows.Controls.StackPanel]::new()
         $favoriteBodyScroll.Content = $favoriteBody
         [void]$grid.Children.Add($favoriteBodyScroll)
+        $border.Resources['HudFavoriteBody'] = $favoriteBodyScroll
 
         $titleDragArea = [System.Windows.Controls.Border]::new()
         $titleDragArea.Background = [System.Windows.Media.Brushes]::Transparent
-        $titleDragArea.Margin = [System.Windows.Thickness]::new(0, 0, 0, 8)
+        $titleDragArea.Margin = [System.Windows.Thickness]::new(0, 4, 0, 8 )
         $titleDragArea.Add_MouseLeftButtonDown({ param($sender, $event) Start-HudPanelDrag -Target $border -Event $event }.GetNewClosure())
+
+        $titleGrid = [System.Windows.Controls.Grid]::new()
+        $titleGrid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
+        $titleGrid.ColumnDefinitions[0].Width = [System.Windows.GridLength]::Auto
+        $titleGrid.ColumnDefinitions.Add([System.Windows.Controls.ColumnDefinition]::new())
+        $titleGrid.ColumnDefinitions[1].Width = [System.Windows.GridLength]::new(1, [System.Windows.GridUnitType]::Star)
+
+        $collapseButton = New-HudFlatButton `
+            -Content '▼' `
+            -Width 20 `
+            -Height 22 `
+            -FontFamily $script:HudFavoriteFontFamily `
+            -FontSize $script:HudFavoriteFilterFontSize `
+            -Foreground $script:HudBrushTextMuted
+        $collapseButton.Margin = [System.Windows.Thickness]::new(0, 1, 3, 0)
+        $collapseButton.VerticalAlignment = [System.Windows.VerticalAlignment]::Top
+        $collapseButton.Tag = $border
+        $collapseButton.Add_Click({
+            param($sender, $event)
+            $panel = $sender.Tag
+            $collapsed = $false
+            if ($panel.Resources.Contains('HudFavoriteCollapsed')) {
+                $collapsed = [bool]$panel.Resources['HudFavoriteCollapsed']
+            }
+            Set-HudFavoritePanelCollapsed -Panel $panel -Collapsed (-not $collapsed) -SaveState $true
+            $event.Handled = $true
+        }.GetNewClosure())
+        [System.Windows.Controls.Grid]::SetColumn($collapseButton, 0)
+        [void]$titleGrid.Children.Add($collapseButton)
+        $border.Resources['HudFavoriteCollapseButton'] = $collapseButton
 
         $titleText = [System.Windows.Controls.TextBlock]::new()
         $titleText.Text = [string]$entry.Feature.title
@@ -1609,8 +1669,12 @@ function global:Refresh-HudFavoritePanelsFromEvent {
         $titleText.FontWeight = [System.Windows.FontWeights]::SemiBold
         $titleText.Foreground = $script:HudBrushTextStrong
         $titleText.TextWrapping = [System.Windows.TextWrapping]::Wrap
-        $titleDragArea.Child = $titleText
-        [void]$favoriteBody.Children.Add($titleDragArea)
+        [System.Windows.Controls.Grid]::SetColumn($titleText, 1)
+        [void]$titleGrid.Children.Add($titleText)
+        $titleDragArea.Child = $titleGrid
+        [System.Windows.Controls.Grid]::SetRow($titleDragArea, 1)
+        [System.Windows.Controls.Grid]::SetColumnSpan($titleDragArea, 3)
+        [void]$grid.Children.Add($titleDragArea)
 
         $shortcutArea = [System.Windows.Controls.Grid]::new()
         $shortcutArea.RowDefinitions.Add([System.Windows.Controls.RowDefinition]::new())

@@ -103,6 +103,9 @@ function global:Set-HudUiStatePanelEntry {
         y = [Math]::Round([double]$Panel.Margin.Top, 2)
         z = [System.Windows.Controls.Panel]::GetZIndex($Panel)
     }
+    if ($Info.Container -eq 'favoritePanels' -and $Panel.Resources.Contains('HudFavoriteCollapsed')) {
+        $entry | Add-Member -NotePropertyName 'collapsed' -NotePropertyValue ([bool]$Panel.Resources['HudFavoriteCollapsed']) -Force
+    }
     if ($null -eq $container.PSObject.Properties[$Info.Key]) {
         $container | Add-Member -NotePropertyName $Info.Key -NotePropertyValue $entry -Force
     }
@@ -157,6 +160,9 @@ function global:Apply-HudUiStateToPanel {
     }
     if ($null -ne $entry.z) {
         [System.Windows.Controls.Panel]::SetZIndex($Panel, [int]$entry.z)
+    }
+    if ($info.Container -eq 'favoritePanels' -and $null -ne $entry.collapsed) {
+        Set-HudFavoritePanelCollapsed -Panel $Panel -Collapsed ([bool]$entry.collapsed)
     }
 }
 
