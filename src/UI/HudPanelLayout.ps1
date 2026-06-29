@@ -179,6 +179,35 @@ function global:Apply-HudUiStateToKnownPanels {
     }
 }
 
+function global:Shift-HudFavoriteUiStateAfterRemove {
+    param([Parameter(Mandatory = $true)][int]$RemovedIndex)
+
+    if ($RemovedIndex -lt 0 -or $null -eq $script:HudUiState) {
+        return
+    }
+
+    $container = Get-HudUiStateContainer -Name 'favoritePanels'
+    $shifted = [pscustomobject]@{}
+    foreach ($property in @($container.PSObject.Properties)) {
+        $match = [regex]::Match($property.Name, '^favorite:(\d+)$')
+        if (-not $match.Success) {
+            $shifted | Add-Member -NotePropertyName $property.Name -NotePropertyValue $property.Value -Force
+            continue
+        }
+
+        $index = [int]$match.Groups[1].Value
+        if ($index -lt $RemovedIndex) {
+            $shifted | Add-Member -NotePropertyName $property.Name -NotePropertyValue $property.Value -Force
+        }
+        elseif ($index -gt $RemovedIndex) {
+            $shifted | Add-Member -NotePropertyName "favorite:$($index - 1)" -NotePropertyValue $property.Value -Force
+        }
+    }
+
+    $script:HudUiState.favoritePanels = $shifted
+    Save-HudUiStateFromEvent
+}
+
 function global:Get-HudPanelRect {
     param(
         [Parameter(Mandatory = $true)][double]$Left,

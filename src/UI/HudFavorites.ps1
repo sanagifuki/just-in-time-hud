@@ -67,6 +67,19 @@ function global:Get-HudFavoriteEntries {
     return $entries.ToArray()
 }
 
+function global:Get-HudFavoriteIndexForFeature {
+    param([Parameter(Mandatory = $true)][object]$Feature)
+
+    $entries = @(Get-HudFavoriteEntries)
+    for ($index = 0; $index -lt $entries.Count; $index++) {
+        if ([object]::ReferenceEquals($entries[$index].Feature, $Feature)) {
+            return $index
+        }
+    }
+
+    return -1
+}
+
 function global:New-HudFavoritePanelBorder {
     param(
         [Parameter(Mandatory = $true)][object]$Entry,
@@ -268,7 +281,9 @@ function global:Refresh-HudFavoritePanelsFromEvent {
         $unfavoriteButton.VerticalAlignment = [System.Windows.VerticalAlignment]::Top
         $unfavoriteButton.Add_Click({
             param($sender, $event)
+            $removedIndex = Get-HudFavoriteIndexForFeature -Feature $entry.Feature
             Remove-HudProperty -Target $entry.Feature -Name 'favorite'
+            Shift-HudFavoriteUiStateAfterRemove -RemovedIndex $removedIndex
             Save-HudJsonFromEvent
             if ($script:HudState.SelectedFeature -eq $entry.Feature) {
                 Set-FavoriteButtonStateFromEvent -Feature $entry.Feature
@@ -415,7 +430,9 @@ function global:Toggle-HudFavoriteFromDetail {
 
     $feature = $script:HudState.SelectedFeature
     if ((Test-HudProperty -Target $feature -Name 'favorite') -and [bool]$feature.favorite) {
+        $removedIndex = Get-HudFavoriteIndexForFeature -Feature $feature
         Remove-HudProperty -Target $feature -Name 'favorite'
+        Shift-HudFavoriteUiStateAfterRemove -RemovedIndex $removedIndex
     }
     else {
         Set-HudProperty -Target $feature -Name 'favorite' -Value $true

@@ -712,10 +712,20 @@ function Show-HudWindow {
         Set-HudProperty -Target $feature -Name 'description' -Value $editorDescriptionBox.Text
 
         Set-HudFeatureSnippetsFromText -Feature $feature -Text $editorShortcutBox.Text -Copyable ([bool]$editorCopyableBox.IsChecked)
+        $wasFavorite = (Test-HudProperty -Target $feature -Name 'favorite') -and [bool]$feature.favorite
         if ([bool]$editorFavoriteBox.IsChecked) {
             Set-HudProperty -Target $feature -Name 'favorite' -Value $true
         }
-        else { Remove-HudProperty -Target $feature -Name 'favorite' }
+        else {
+            if ($wasFavorite) {
+                $removedIndex = Get-HudFavoriteIndexForFeature -Feature $feature
+                Remove-HudProperty -Target $feature -Name 'favorite'
+                Shift-HudFavoriteUiStateAfterRemove -RemovedIndex $removedIndex
+            }
+            else {
+                Remove-HudProperty -Target $feature -Name 'favorite'
+            }
+        }
         if ($DirtyFields -contains 'Title') {
             Set-EditorLabelText -Label $editorTitleLabel -Text 'Title:' -Dirty $false
         }
@@ -751,10 +761,20 @@ function Show-HudWindow {
         Set-HudProperty -Target $feature -Name 'description' -Value $editorDescriptionBox.Text
 
         Set-HudFeatureSnippetsFromText -Feature $feature -Text $editorShortcutBox.Text -Copyable ([bool]$editorCopyableBox.IsChecked)
+        $wasFavorite = (Test-HudProperty -Target $feature -Name 'favorite') -and [bool]$feature.favorite
         if ([bool]$editorFavoriteBox.IsChecked) {
             Set-HudProperty -Target $feature -Name 'favorite' -Value $true
         }
-        else { Remove-HudProperty -Target $feature -Name 'favorite' }
+        else {
+            if ($wasFavorite) {
+                $removedIndex = Get-HudFavoriteIndexForFeature -Feature $feature
+                Remove-HudProperty -Target $feature -Name 'favorite'
+                Shift-HudFavoriteUiStateAfterRemove -RemovedIndex $removedIndex
+            }
+            else {
+                Remove-HudProperty -Target $feature -Name 'favorite'
+            }
+        }
     }
 
     function Register-EditorEvents {

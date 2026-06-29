@@ -1,6 +1,6 @@
 ﻿# Auto-generated from src/*.ps1 by build.ps1.
 # Edit files under src/ instead of this generated file.
-# Source commit: f0bf38a
+# Source commit: 2f3075f
 
 $script:HudSingleFile = $true
 
@@ -1209,6 +1209,35 @@ function global:Apply-HudUiStateToKnownPanels {
     }
 }
 
+function global:Shift-HudFavoriteUiStateAfterRemove {
+    param([Parameter(Mandatory = $true)][int]$RemovedIndex)
+
+    if ($RemovedIndex -lt 0 -or $null -eq $script:HudUiState) {
+        return
+    }
+
+    $container = Get-HudUiStateContainer -Name 'favoritePanels'
+    $shifted = [pscustomobject]@{}
+    foreach ($property in @($container.PSObject.Properties)) {
+        $match = [regex]::Match($property.Name, '^favorite:(\d+)$')
+        if (-not $match.Success) {
+            $shifted | Add-Member -NotePropertyName $property.Name -NotePropertyValue $property.Value -Force
+            continue
+        }
+
+        $index = [int]$match.Groups[1].Value
+        if ($index -lt $RemovedIndex) {
+            $shifted | Add-Member -NotePropertyName $property.Name -NotePropertyValue $property.Value -Force
+        }
+        elseif ($index -gt $RemovedIndex) {
+            $shifted | Add-Member -NotePropertyName "favorite:$($index - 1)" -NotePropertyValue $property.Value -Force
+        }
+    }
+
+    $script:HudUiState.favoritePanels = $shifted
+    Save-HudUiStateFromEvent
+}
+
 function global:Get-HudPanelRect {
     param(
         [Parameter(Mandatory = $true)][double]$Left,
@@ -1398,6 +1427,19 @@ function global:Get-HudFavoriteEntries {
         }
     }
     return $entries.ToArray()
+}
+
+function global:Get-HudFavoriteIndexForFeature {
+    param([Parameter(Mandatory = $true)][object]$Feature)
+
+    $entries = @(Get-HudFavoriteEntries)
+    for ($index = 0; $index -lt $entries.Count; $index++) {
+        if ([object]::ReferenceEquals($entries[$index].Feature, $Feature)) {
+            return $index
+        }
+    }
+
+    return -1
 }
 
 function global:New-HudFavoritePanelBorder {
@@ -1601,7 +1643,9 @@ function global:Refresh-HudFavoritePanelsFromEvent {
         $unfavoriteButton.VerticalAlignment = [System.Windows.VerticalAlignment]::Top
         $unfavoriteButton.Add_Click({
             param($sender, $event)
+            $removedIndex = Get-HudFavoriteIndexForFeature -Feature $entry.Feature
             Remove-HudProperty -Target $entry.Feature -Name 'favorite'
+            Shift-HudFavoriteUiStateAfterRemove -RemovedIndex $removedIndex
             Save-HudJsonFromEvent
             if ($script:HudState.SelectedFeature -eq $entry.Feature) {
                 Set-FavoriteButtonStateFromEvent -Feature $entry.Feature
@@ -1748,7 +1792,9 @@ function global:Toggle-HudFavoriteFromDetail {
 
     $feature = $script:HudState.SelectedFeature
     if ((Test-HudProperty -Target $feature -Name 'favorite') -and [bool]$feature.favorite) {
+        $removedIndex = Get-HudFavoriteIndexForFeature -Feature $feature
         Remove-HudProperty -Target $feature -Name 'favorite'
+        Shift-HudFavoriteUiStateAfterRemove -RemovedIndex $removedIndex
     }
     else {
         Set-HudProperty -Target $feature -Name 'favorite' -Value $true
@@ -2930,10 +2976,20 @@ function Show-HudWindow {
         Set-HudProperty -Target $feature -Name 'description' -Value $editorDescriptionBox.Text
 
         Set-HudFeatureSnippetsFromText -Feature $feature -Text $editorShortcutBox.Text -Copyable ([bool]$editorCopyableBox.IsChecked)
+        $wasFavorite = (Test-HudProperty -Target $feature -Name 'favorite') -and [bool]$feature.favorite
         if ([bool]$editorFavoriteBox.IsChecked) {
             Set-HudProperty -Target $feature -Name 'favorite' -Value $true
         }
-        else { Remove-HudProperty -Target $feature -Name 'favorite' }
+        else {
+            if ($wasFavorite) {
+                $removedIndex = Get-HudFavoriteIndexForFeature -Feature $feature
+                Remove-HudProperty -Target $feature -Name 'favorite'
+                Shift-HudFavoriteUiStateAfterRemove -RemovedIndex $removedIndex
+            }
+            else {
+                Remove-HudProperty -Target $feature -Name 'favorite'
+            }
+        }
         if ($DirtyFields -contains 'Title') {
             Set-EditorLabelText -Label $editorTitleLabel -Text 'Title:' -Dirty $false
         }
@@ -2969,10 +3025,20 @@ function Show-HudWindow {
         Set-HudProperty -Target $feature -Name 'description' -Value $editorDescriptionBox.Text
 
         Set-HudFeatureSnippetsFromText -Feature $feature -Text $editorShortcutBox.Text -Copyable ([bool]$editorCopyableBox.IsChecked)
+        $wasFavorite = (Test-HudProperty -Target $feature -Name 'favorite') -and [bool]$feature.favorite
         if ([bool]$editorFavoriteBox.IsChecked) {
             Set-HudProperty -Target $feature -Name 'favorite' -Value $true
         }
-        else { Remove-HudProperty -Target $feature -Name 'favorite' }
+        else {
+            if ($wasFavorite) {
+                $removedIndex = Get-HudFavoriteIndexForFeature -Feature $feature
+                Remove-HudProperty -Target $feature -Name 'favorite'
+                Shift-HudFavoriteUiStateAfterRemove -RemovedIndex $removedIndex
+            }
+            else {
+                Remove-HudProperty -Target $feature -Name 'favorite'
+            }
+        }
     }
 
     function Register-EditorEvents {
